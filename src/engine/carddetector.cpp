@@ -1,6 +1,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <string>
 #include <unordered_map>
 #include <vector>
 #include <numeric>
@@ -229,7 +230,12 @@ CardDetector::CardDetector(QSharedPointer<Ort::Env> env, const CardDetectorConfi
             qCDebug(logger) << "Available providers:" << providers;
         }
 
-        m_session = Ort::Session(*m_env, m_config.path.c_str(), sessionOptions);
+#ifdef WIN32
+        std::wstring model_path(m_config.path.begin(), m_config.path.end());
+#else
+        std::string model_path = m_config.path;
+#endif
+        m_session = Ort::Session(*m_env, model_path.c_str(), sessionOptions);
 
         // Populate the inputs/outputs
         m_inputNames = m_session.GetInputNames();
