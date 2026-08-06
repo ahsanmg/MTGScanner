@@ -122,7 +122,8 @@ git clone --recursive https://github.com/ahsanullah-8bit/MTGScanner.git
 cd MTGScanner
 
 # Configure
-cmake -S . -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=<vcpkg_root>/scripts/buildsystems/vcpkg.cmake -DVCPKG_MANIFEST_MODE=ON -DVCPKG_BOOTSTRAP_OPTIONS=--shallow -DQT_QMAKE_EXECUTABLE=<qt_root>/<version>/<kit>/bin/qmake.exe
+cmake -S . -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=<vcpkg_root>/scripts/buildsystems/vcpkg.cmake -DVCPKG_MANIFEST_MODE=ON -DVCPKG_BOOTSTRAP_OPTIONS=--shallow -DVCPKG_TARGET_TRIPLET=x64-linux-release -DVCPKG_OVERLAY_TRIPLETS=triplets -DQT_QMAKE_EXECUTABLE=<qt_root>/<version>/<kit>/bin/qmake.exe
+# Replace the x64-linux-release with x64-windows-release for Windows.
 
 # Build
 cmake --build build
