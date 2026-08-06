@@ -13,6 +13,7 @@ on:
 
 jobs:
   build:
+    timeout-minutes: 120
     strategy:
       matrix:
         include:
@@ -20,10 +21,12 @@ jobs:
             host: linux
             arch: linux_gcc_64
             qt: '6.8.*'
+            triplet: x64-linux-release
           - os: windows-latest
             host: windows
             arch: win64_msvc2022_64
             qt: '6.8.*'
+            triplet: x64-windows-release
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read
@@ -53,10 +56,10 @@ jobs:
           modules: 'qtmultimedia'
           cache: true
 
-      - name: Show Qt info
-        run: |
-          echo "Qt installed at: ${{ steps.install-qt.outputs.qt }}"
-          ${{ runner.os == 'Windows' && 'where qtpaths || true' || 'which qtpaths || true' }}
+      # - name: Show Qt info
+      #   run: |
+      #     echo "Qt installed at: ${{ steps.install-qt.outputs.qt }}"
+      #     ${{ runner.os == 'Windows' && 'where qtpaths || true' || 'which qtpaths || true' }}
 
       - name: Configure (CMake)
         shell: bash
@@ -68,10 +71,12 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR" \
             -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" \
+            -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} \
+            -DVCPKG_OVERLAY_TRIPLETS="${{ github.workspace }}/triplets"
 
       - name: Build
         run: |
-          cmake --build build --config Release -- -j
+          cmake --build build --config Release
 
       # - name: Run tests (ctest)
       #   run: |
