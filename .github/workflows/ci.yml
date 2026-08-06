@@ -19,11 +19,11 @@ jobs:
           - os: ubuntu-latest
             host: linux
             arch: gcc_64
-            qt: '6.11.1'
+            qt: '6.8.*'
           - os: windows-latest
             host: windows
-            arch: win64_msvc
-            qt: '6.11.1'
+            arch: win64_msvc2022_64
+            qt: '6.8.*'
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read
@@ -31,19 +31,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
-      - name: Upgrade aqtinstall CLI tool
-        run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install --upgrade aqtinstall
 
       - name: Install Qt
         id: install-qt
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ matrix.qt }}
+          target: 'desktop'
           host: ${{ matrix.host }}
           arch: ${{ matrix.arch }}
+          modules: 'qtmultimedia'
           cache: true
 
       - name: Show Qt info
@@ -51,12 +48,23 @@ jobs:
           echo "Qt installed at: ${{ steps.install-qt.outputs.qt }}"
           ${{ runner.os == 'Windows' && 'where qtpaths || true' || 'which qtpaths || true' }}
 
+      - name: Setup vcpkg caching
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '')
+
       - name: Configure (CMake)
         env:
-          QT_ROOT: ${{ steps.install-qt.outputs.qt }}
+          VCPKG_BINARY_SOURCES: 'clear;x-gha,errors'
         run: |
           python --version || true
-          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$QT_ROOT"
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR" \
+            -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" \
+            -DVCPKG_ENV_PASSTHROUGH_UNTRACKED=ON
 
       - name: Build
         run: |
