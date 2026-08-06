@@ -18,7 +18,7 @@ jobs:
         include:
           - os: ubuntu-latest
             host: linux
-            arch: gcc_64
+            arch: linux_gcc_64
             qt: '6.8.*'
           - os: windows-latest
             host: windows
