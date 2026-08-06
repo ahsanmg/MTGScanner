@@ -1,0 +1,75 @@
+# CI: Build & test on Ubuntu and Windows using Qt + CMake
+# - installs Qt with jurplel/install-qt-action
+# - configures with CMake (Ninja)
+# - [TODO] builds and runs ctest
+# - [TODO] uploads the build directory as an artifact
+name: CI
+
+on:
+  push:
+    branches: [ master, add-devops ]
+  pull_request:
+    branches: [ main, add-devops ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            host: linux
+            arch: gcc_64
+            qt: '6.11.1'
+          - os: windows-latest
+            host: windows
+            arch: win64_msvc
+            qt: '6.11.1'
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Upgrade aqtinstall CLI tool
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install --upgrade aqtinstall
+
+      - name: Install Qt
+        id: install-qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ matrix.qt }}
+          host: ${{ matrix.host }}
+          arch: ${{ matrix.arch }}
+          cache: true
+
+      - name: Show Qt info
+        run: |
+          echo "Qt installed at: ${{ steps.install-qt.outputs.qt }}"
+          ${{ runner.os == 'Windows' && 'where qtpaths || true' || 'which qtpaths || true' }}
+
+      - name: Configure (CMake)
+        env:
+          QT_ROOT: ${{ steps.install-qt.outputs.qt }}
+        run: |
+          python --version || true
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$QT_ROOT"
+
+      - name: Build
+        run: |
+          cmake --build build --config Release -- -j
+
+      # - name: Run tests (ctest)
+      #   run: |
+      #     cmake --build build --target test --config Release || true
+      #     ctest --test-dir build -C Release --output-on-failure
+
+      # - name: Upload build artifact
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: build-${{ matrix.os }}
+      #     path: build
