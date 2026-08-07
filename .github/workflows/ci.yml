@@ -56,10 +56,56 @@ jobs:
           modules: 'qtmultimedia'
           cache: true
 
-      # - name: Show Qt info
-      #   run: |
-      #     echo "Qt installed at: ${{ steps.install-qt.outputs.qt }}"
-      #     ${{ runner.os == 'Windows' && 'where qtpaths || true' || 'which qtpaths || true' }}
+      - name: Show Environment
+        shell: bash
+        run: |
+          echo "=== Environment ==="
+          echo "Qt (install-qt):       ${{ steps.install-qt.outputs.qt }}"
+          echo "Qt (env):              ${{ env.QT_ROOT_DIR }}"
+          echo "Vcpkg (env):           ${{ env.VCPKG_INSTALLATION_ROOT }}"
+          echo
+
+          echo "=== Current directory ==="
+          pwd
+          echo
+
+          echo "=== Directory contents ==="
+          ls -la
+          echo
+
+          echo "=== Compiler discovery ==="
+          echo "CC=$CC"
+          echo "CXX=$CXX"
+          which cl || true
+          which gcc || true
+          which g++ || true
+          which c++ || true
+          where.exe cl || true
+          where.exe gcc || true
+          where.exe g++ || true
+          where.exe c++.exe || true
+          echo
+
+          echo "=== Tool versions ==="
+          cmake --version
+          ninja --version || true
+          python --version || true
+          pip show aqtinstall || true
+          aqt version || true
+          echo
+
+          echo "=== Available Qt versions (aqt) ==="
+          aqt list-qt windows desktop || true
+          aqt list-qt linux desktop || true
+          echo
+
+          echo "=== Available Qt modules (aqt) ==="
+          aqt list-qt windows desktop --modules 6.8.3 win64_msvc2022_64 || true
+          aqt list-qt linux desktop --modules 6.8.3 linux_gcc_64 || true      - name: Show Enviroment
+              run: |
+                echo "Qt (using install-qt): ${{ steps.install-qt.outputs.qt }}"
+                echo "Qt (using env.):        ${{ env.QT_ROOT_DIR }}"
+                echo "VCPKG (using env.):     ${{ env.VCPKG_INSTALLATION_ROOT }}"
 
       - name: Configure (CMake)
         env:
