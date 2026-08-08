@@ -63,7 +63,6 @@ jobs:
           echo "Qt (install-qt):       ${{ steps.install-qt.outputs.qt }}"
           echo "Qt (env):              ${{ env.QT_ROOT_DIR }}"
           echo "Vcpkg (env):           ${{ env.VCPKG_INSTALLATION_ROOT }}"
-          echo
 
           echo "=== Current directory ==="
           pwd
@@ -101,11 +100,7 @@ jobs:
 
           echo "=== Available Qt modules (aqt) ==="
           aqt list-qt windows desktop --modules 6.8.3 win64_msvc2022_64 || true
-          aqt list-qt linux desktop --modules 6.8.3 linux_gcc_64 || true      - name: Show Enviroment
-              run: |
-                echo "Qt (using install-qt): ${{ steps.install-qt.outputs.qt }}"
-                echo "Qt (using env.):        ${{ env.QT_ROOT_DIR }}"
-                echo "VCPKG (using env.):     ${{ env.VCPKG_INSTALLATION_ROOT }}"
+          aqt list-qt linux desktop --modules 6.8.3 linux_gcc_64 || true
 
       - name: Configure (CMake)
         env:
