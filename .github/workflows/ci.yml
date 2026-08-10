@@ -7,9 +7,9 @@ name: CI
 
 on:
   push:
-    branches: [ master, add-devops ]
+    branches: [ master ]
   pull_request:
-    branches: [ master, add-devops ]
+    branches: [ master ]
 
 jobs:
   build:
@@ -127,7 +127,7 @@ jobs:
           cmake -S . -B build -G Ninja `
             -DCMAKE_BUILD_TYPE=Release `
             -DCMAKE_PREFIX_PATH="$env:QT_ROOT_DIR" `
-            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
 
       - name: Build
         run: |
