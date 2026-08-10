@@ -1,0 +1,146 @@
+# CI: Build & test on Ubuntu and Windows using Qt + CMake
+# - installs Qt with jurplel/install-qt-action
+# - configures with CMake (Ninja)
+# - [TODO] builds and runs ctest
+# - [TODO] uploads the build directory as an artifact
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    timeout-minutes: 120
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            host: linux
+            arch: linux_gcc_64
+            qt: '6.9.*'
+            triplet: x64-linux-release
+          - os: windows-latest
+            host: windows
+            arch: win64_msvc2022_64
+            qt: '6.9.*'
+            triplet: x64-windows-release
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup MSVC
+        if: matrix.host == 'windows'
+        uses: TheMrMilchmann/setup-msvc-dev@v4
+        with:
+          arch: x64
+
+      - name: Restore vcpkg binary cache
+        uses: actions/cache@v4
+        with:
+          path: .vcpkg-cache
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-
+
+      - name: Install Qt
+        id: install-qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ matrix.qt }}
+          target: 'desktop'
+          host: ${{ matrix.host }}
+          arch: ${{ matrix.arch }}
+          modules: 'qtmultimedia'
+          cache: true
+
+      - name: Show Environment
+        shell: bash
+        run: |
+          echo "=== Environment ==="
+          echo "Qt (install-qt):  ${{ steps.install-qt.outputs.qt }}"
+          echo "Qt (env):         ${{ env.QT_ROOT_DIR }}"
+          echo "Vcpkg (env):      ${{ env.VCPKG_INSTALLATION_ROOT }}"
+
+          echo "=== Current directory ==="
+          pwd
+          echo
+
+          echo "=== Directory contents ==="
+          ls -la
+          echo
+
+          echo "=== Compiler discovery ==="
+          echo "CC=$CC"
+          echo "CXX=$CXX"
+          which cl || true
+          which gcc || true
+          which g++ || true
+          which c++ || true
+          where.exe cl || true
+          where.exe gcc || true
+          where.exe g++ || true
+          where.exe c++.exe || true
+          echo
+
+          echo "=== Tool versions ==="
+          cmake --version
+          ninja --version || true
+          python --version || true
+
+      - name: Configure (CMake - Linux)
+        if: matrix.host == 'linux'
+        shell: bash
+        env:
+          VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite"
+        run: |
+          python --version || true
+          echo "Qt (bash):      $QT_ROOT_DIR"
+          echo "Vcpkg (bash):   $VCPKG_INSTALLATION_ROOT"
+          echo "Running:        cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$QT_ROOT_DIR -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR" \
+            -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+
+      - name: Configure (CMake - Windows)
+        if: matrix.host == 'windows'
+        shell: pwsh
+        env:
+          VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite"
+        run: |
+          python --version || true
+
+          echo "Qt (bash):      $env:QT_ROOT_DIR"
+          echo "Vcpkg (bash):   $env:VCPKG_INSTALLATION_ROOT"
+          echo "Running:        cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$env:QT_ROOT_DIR -DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+
+          cmake -S . -B build -G Ninja `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_PREFIX_PATH="$env:QT_ROOT_DIR" `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
+
+      - name: Build
+        run: |
+          cmake --build build --config Release
+
+      # - name: Run tests (ctest)
+      #   run: |
+      #     cmake --build build --target test --config Release || true
+      #     ctest --test-dir build -C Release --output-on-failure
+
+      # - name: Upload build artifact
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: build-${{ matrix.os }}
+      #     path: build
