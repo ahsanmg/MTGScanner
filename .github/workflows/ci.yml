@@ -20,12 +20,12 @@ jobs:
           - os: ubuntu-latest
             host: linux
             arch: linux_gcc_64
-            qt: '6.8.*'
+            qt: '6.9.*'
             triplet: x64-linux-release
           - os: windows-latest
             host: windows
             arch: win64_msvc2022_64
-            qt: '6.8.*'
+            qt: '6.9.*'
             triplet: x64-windows-release
     runs-on: ${{ matrix.os }}
     permissions:
