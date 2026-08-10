@@ -37,6 +37,12 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Setup MSVC
+        if: matrix.host == 'windows'
+        uses: TheMrMilchmann/setup-msvc-dev@v4
+        with:
+          arch: x64
+
       - name: Restore vcpkg binary cache
         uses: actions/cache@v4
         with:
@@ -62,7 +68,9 @@ jobs:
           echo "=== Environment ==="
           echo "Qt (install-qt):       ${{ steps.install-qt.outputs.qt }}"
           echo "Qt (env):              ${{ env.QT_ROOT_DIR }}"
+          echo "Qt (bash):             $QT_ROOT_DIR"
           echo "Vcpkg (env):           ${{ env.VCPKG_INSTALLATION_ROOT }}"
+          echo "Vcpkg (bash):          $VCPKG_INSTALLATION_ROOT"
 
           echo "=== Current directory ==="
           pwd
@@ -102,17 +110,29 @@ jobs:
           aqt list-qt windows desktop --modules 6.8.3 win64_msvc2022_64 || true
           aqt list-qt linux desktop --modules 6.8.3 linux_gcc_64 || true
 
-      - name: Configure (CMake)
+      - name: Configure (CMake - Linux)
+        if: matrix.host == 'linux'
+        shell: bash
         env:
           VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite"
         run: |
           python --version || true
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_PREFIX_PATH="${{ env.QT_ROOT_DIR }}" \
-            -DCMAKE_TOOLCHAIN_FILE="${{ env.VCPKG_INSTALLATION_ROOT }}/scripts/buildsystems/vcpkg.cmake" \
-            -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} \
-            -DVCPKG_OVERLAY_TRIPLETS="${{ github.workspace }}/triplets"
+            -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR" \
+            -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+
+      - name: Configure (CMake - Windows)
+        if: matrix.host == 'windows'
+        shell: pwsh
+        env:
+          VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite"
+        run: |
+          python --version || true
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$env:QT_ROOT_DIR" \
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
 
       - name: Build
         run: |
