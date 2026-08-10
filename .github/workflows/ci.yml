@@ -66,11 +66,9 @@ jobs:
         shell: bash
         run: |
           echo "=== Environment ==="
-          echo "Qt (install-qt):       ${{ steps.install-qt.outputs.qt }}"
-          echo "Qt (env):              ${{ env.QT_ROOT_DIR }}"
-          echo "Qt (bash):             $QT_ROOT_DIR"
-          echo "Vcpkg (env):           ${{ env.VCPKG_INSTALLATION_ROOT }}"
-          echo "Vcpkg (bash):          $VCPKG_INSTALLATION_ROOT"
+          echo "Qt (install-qt):  ${{ steps.install-qt.outputs.qt }}"
+          echo "Qt (env):         ${{ env.QT_ROOT_DIR }}"
+          echo "Vcpkg (env):      ${{ env.VCPKG_INSTALLATION_ROOT }}"
 
           echo "=== Current directory ==="
           pwd
@@ -97,18 +95,6 @@ jobs:
           cmake --version
           ninja --version || true
           python --version || true
-          pip show aqtinstall || true
-          aqt version || true
-          echo
-
-          echo "=== Available Qt versions (aqt) ==="
-          aqt list-qt windows desktop || true
-          aqt list-qt linux desktop || true
-          echo
-
-          echo "=== Available Qt modules (aqt) ==="
-          aqt list-qt windows desktop --modules 6.8.3 win64_msvc2022_64 || true
-          aqt list-qt linux desktop --modules 6.8.3 linux_gcc_64 || true
 
       - name: Configure (CMake - Linux)
         if: matrix.host == 'linux'
@@ -117,6 +103,10 @@ jobs:
           VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite"
         run: |
           python --version || true
+          echo "Qt (bash):      $QT_ROOT_DIR"
+          echo "Vcpkg (bash):   $VCPKG_INSTALLATION_ROOT"
+          echo "Running:        cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$QT_ROOT_DIR -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR" \
@@ -129,6 +119,11 @@ jobs:
           VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite"
         run: |
           python --version || true
+
+          echo "Qt (bash):      $env:QT_ROOT_DIR"
+          echo "Vcpkg (bash):   $env:VCPKG_INSTALLATION_ROOT"
+          echo "Running:        cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$env:QT_ROOT_DIR -DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_PREFIX_PATH="$env:QT_ROOT_DIR" \
