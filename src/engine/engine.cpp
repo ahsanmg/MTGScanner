@@ -30,6 +30,7 @@
 #include <opencv2/highgui.hpp>
 
 #include <core/frame.hpp>
+#include <core/image.hpp>
 #include <core/prediction.hpp>
 #include <engine/channelraw.hpp>
 #include <engine/carddetector.h>
@@ -529,6 +530,7 @@ void Engine::addChannel(AbstractChannel *channel, int status)
     window->setWindowTitle(channel->options().windowName);
     window->setGeometry(channel->options().windowGeometry);
     window->setScreen(channel->outputWindowScreen());
+    window->setWindowIcon(indexedWindowIcon(":/MTGScanner/icons/app_titled.svg", m_outputWindows.size() + 1));
     model->setParent(window);
     m_outputWindows.emplace(channel->options().id, window);
     if (m_mainQmlWindow)

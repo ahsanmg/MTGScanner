@@ -4,7 +4,7 @@ project(MTGScanner VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 6.8 REQUIRED COMPONENTS Quick Multimedia QuickControls2 Widgets)
+find_package(Qt6 6.8 REQUIRED COMPONENTS Quick Multimedia QuickControls2 Widgets Svg)
 find_package(OpenCV CONFIG REQUIRED)
 find_package(TBB CONFIG REQUIRED)
 find_package(yaml-cpp CONFIG REQUIRED)
@@ -71,6 +71,7 @@ target_link_libraries(${PROJECT_NAME}App
     Qt6::Quick
     Qt6::Multimedia
     Qt6::Widgets
+    Qt6::Svg
 
     TBB::tbb
     ${OpenCV_LIBS}

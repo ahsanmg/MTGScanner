@@ -12,7 +12,7 @@
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    app.setWindowIcon(QIcon(":/MTGScanner/icons/app.png"));
+    app.setWindowIcon(QIcon(":/MTGScanner/icons/app.svg"));
 
     QCoreApplication::setOrganizationName("MadStudio");
     QCoreApplication::setOrganizationDomain("MadStudio.io");

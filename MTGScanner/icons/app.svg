@@ -1,39 +1,32 @@
-<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M380 32H132C76.7715 32 32 76.7715 32 132V380C32 435.228 76.7715 480 132 480H380C435.228 480 480 435.228 480 380V132C480 76.7715 435.228 32 380 32Z" fill="url(#paint0_linear_1_2)" stroke="#334155" stroke-width="4"/>
-<path opacity="0.4" d="M256 396C333.32 396 396 333.32 396 256C396 178.68 333.32 116 256 116C178.68 116 116 178.68 116 256C116 333.32 178.68 396 256 396Z" stroke="url(#paint1_linear_1_2)" stroke-width="6" stroke-dasharray="12 12"/>
-<path opacity="0.6" d="M325.619 148.644L218.67 133.614C212.107 132.691 206.039 137.264 205.116 143.827L182.014 308.211C181.091 314.774 185.664 320.842 192.227 321.764L299.176 336.795C305.739 337.718 311.807 333.145 312.729 326.582L335.832 162.198C336.754 155.635 332.181 149.567 325.619 148.644Z" stroke="url(#paint2_linear_1_2)" stroke-width="6"/>
-<path d="M299.684 135.735L192.095 145.148C185.493 145.725 180.609 151.546 181.187 158.148L195.655 323.516C196.232 330.119 202.053 335.002 208.655 334.425L316.244 325.012C322.846 324.434 327.73 318.614 327.153 312.012L312.685 146.643C312.107 140.041 306.287 135.157 299.684 135.735Z" fill="#1E293B" stroke="url(#paint3_linear_1_2)" stroke-width="8"/>
-<path d="M256 298C279.196 298 298 279.196 298 256C298 232.804 279.196 214 256 214C232.804 214 214 232.804 214 256C214 279.196 232.804 298 256 298Z" fill="#0F172A" stroke="url(#paint4_linear_1_2)" stroke-width="8"/>
-<path d="M256 274C265.941 274 274 265.941 274 256C274 246.059 265.941 238 256 238C246.059 238 238 246.059 238 256C238 265.941 246.059 274 256 274Z" fill="url(#paint5_linear_1_2)"/>
-<path d="M144 174V144H174" stroke="#22D3EE" stroke-width="6" stroke-linecap="round"/>
-<path d="M368 174V144H338" stroke="#22D3EE" stroke-width="6" stroke-linecap="round"/>
-<path d="M144 338V368H174" stroke="#22D3EE" stroke-width="6" stroke-linecap="round"/>
-<path d="M368 338V368H338" stroke="#22D3EE" stroke-width="6" stroke-linecap="round"/>
-<foreignObject x="0" y="0" width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="backdrop-filter:blur(0px);height:100%;width:100%"></div></foreignObject><path opacity="0.85" data-figma-bg-blur-radius="0" d="M124 256H388" stroke="#22D3EE" stroke-width="4"/>
-<defs>
-<linearGradient id="paint0_linear_1_2" x1="32" y1="32" x2="480" y2="480" gradientUnits="userSpaceOnUse">
-<stop stop-color="#0F172A"/>
-<stop offset="1" stop-color="#1E293B"/>
-</linearGradient>
-<linearGradient id="paint1_linear_1_2" x1="116" y1="116" x2="396" y2="396" gradientUnits="userSpaceOnUse">
-<stop stop-color="#06B6D4"/>
-<stop offset="1" stop-color="#3B82F6"/>
-</linearGradient>
-<linearGradient id="paint2_linear_1_2" x1="206.786" y1="131.943" x2="365.896" y2="279.224" gradientUnits="userSpaceOnUse">
-<stop stop-color="#EC4899"/>
-<stop offset="1" stop-color="#8B5CF6"/>
-</linearGradient>
-<linearGradient id="paint3_linear_1_2" x1="180.141" y1="146.194" x2="368.303" y2="253.908" gradientUnits="userSpaceOnUse">
-<stop stop-color="#06B6D4"/>
-<stop offset="1" stop-color="#3B82F6"/>
-</linearGradient>
-<linearGradient id="paint4_linear_1_2" x1="214" y1="214" x2="298" y2="298" gradientUnits="userSpaceOnUse">
-<stop stop-color="#06B6D4"/>
-<stop offset="1" stop-color="#3B82F6"/>
-</linearGradient>
-<linearGradient id="paint5_linear_1_2" x1="238" y1="238" x2="274" y2="274" gradientUnits="userSpaceOnUse">
-<stop stop-color="#EC4899"/>
-<stop offset="1" stop-color="#8B5CF6"/>
-</linearGradient>
-</defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Pink to Purple Gradient (Back Card & Inner Circle Fill) -->
+    <linearGradient id="pink-purple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EC4899" />
+      <stop offset="100%" stop-color="#8B5CF6" />
+    </linearGradient>
+
+    <!-- Cyan to Blue Gradient (Front Card & Inner Circle Stroke) -->
+    <linearGradient id="cyan-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06B6D4" />
+      <stop offset="100%" stop-color="#3B82F6" />
+    </linearGradient>
+
+    <!-- Card Face Gradient (Universal Dark/Light Separation) -->
+    <linearGradient id="card-face" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3B4C66" />
+      <stop offset="100%" stop-color="#222F43" />
+    </linearGradient>
+  </defs>
+
+  <!-- Back Card (Rotated Clockwise, Pink/Purple Gradient Outline) -->
+  <rect x="111" y="46" width="290" height="420" rx="28" fill="url(#card-face)" stroke="url(#pink-purple)" stroke-width="14" transform="rotate(10 256 256)" opacity="0.85" />
+
+  <!-- Front Card (Rotated Counter-Clockwise, Dark Fill, Cyan/Blue Gradient Outline) -->
+  <rect x="111" y="46" width="290" height="420" rx="28" fill="url(#card-face)" stroke="url(#cyan-blue)" stroke-width="16" transform="rotate(-5 256 256)" />
+
+  <!-- Center Index Badge Circle -->
+  <circle cx="256" cy="296" r="92" fill="#0F172A" stroke="url(#cyan-blue)" stroke-width="14" />
+
+  <circle cx="256" cy="296" r="40" fill="url(#pink-purple)" />
 </svg>
