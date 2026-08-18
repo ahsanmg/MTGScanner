@@ -32,7 +32,7 @@ Pane {
             Layout.fillHeight: true
             Layout.alignment: Qt.AlignVCenter
 
-            icon.source: "qrc:/qt/qml/MTGScanner/icons/" + (root.channelRunning ? "pause.svg" : "play.svg")
+            icon.source: "qrc:/MTGScanner/icons/" + (root.channelRunning ? "pause.svg" : "play.svg")
             opacity: 0.8
             onClicked: root.channelRunning ? stopChannel() : startChannel()
         }

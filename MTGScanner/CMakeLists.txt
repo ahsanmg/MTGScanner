@@ -10,9 +10,14 @@ qt_add_qml_module(${PROJECT_NAME}
         src/channelmetrics.h
         src/channelmetrics.cpp
         src/framespersecond.hpp
-    RESOURCES
+)
+
+qt_add_resources(${PROJECT_NAME} "app_icons"
+    PREFIX "/${PROJECT_NAME}"
+    FILES
+        icons/app_titled.svg
         icons/app-window.svg
-        icons/check.svg
+        icons/app.svg
         icons/check.svg
         icons/funnel-plus.svg
         icons/menu.svg
@@ -22,6 +27,12 @@ qt_add_qml_module(${PROJECT_NAME}
         icons/square.svg
         icons/trash-2.svg
 )
+
+if (WIN32)
+    set(WIN_RESOURCE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/app_icon.rc")
+endif()
+
+target_sources(${PROJECT_NAME} PUBLIC ${WIN_RESOURCE_FILE})
 
 target_link_libraries(${PROJECT_NAME} PUBLIC Qt6::QuickControls2 Qt6::Multimedia)
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)

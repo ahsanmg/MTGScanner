@@ -88,3 +88,4 @@ compile_commands.json
 *.onnx
 *.mp4
 *.mkv
+!app_icon.rc

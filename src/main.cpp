@@ -1,7 +1,9 @@
+#include <QIcon>
 #include <QObject>
 #include <QQmlEngine>
 #include <QApplication>
 #include <QQuickWindow>
+#include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QScopedPointer>
 
@@ -10,6 +12,7 @@
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
+    app.setWindowIcon(QIcon(":/MTGScanner/icons/app.png"));
 
     QCoreApplication::setOrganizationName("MadStudio");
     QCoreApplication::setOrganizationDomain("MadStudio.io");

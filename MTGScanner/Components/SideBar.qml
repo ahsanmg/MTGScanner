@@ -58,7 +58,7 @@ Drawer {
                             Layout.fillHeight: true
                             Layout.alignment: Qt.AlignVCenter
 
-                            icon.source: "qrc:/qt/qml/MTGScanner/icons/trash-2.svg"
+                            icon.source: "qrc:/MTGScanner/icons/trash-2.svg"
                             opacity: 0.6
                             visible: channelDelegate.hovered
                             onClicked: root.deleteChannelClicked(model.id)
@@ -94,7 +94,7 @@ Drawer {
             flat: true
             highlighted: true
             text: "Add Channel"
-            icon.source: "qrc:/qt/qml/MTGScanner/icons/plus.svg"
+            icon.source: "qrc:/MTGScanner/icons/plus.svg"
             onClicked: root.addChannelClicked()
         }
     }
