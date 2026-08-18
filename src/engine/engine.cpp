@@ -521,20 +521,18 @@ void Engine::addChannel(AbstractChannel *channel, int status)
         return;
     }
 
-    if (demo_channel) {
-        auto model = new NameplateModel(20);
-        OutputWindow *window = new OutputWindow(true,
-                                                true,
-                                                model,
-                                                nullptr);
-        window->setWindowTitle(channel->options().windowName);
-        window->setGeometry(channel->options().windowGeometry);
-        window->setScreen(channel->outputWindowScreen());
-        model->setParent(window);
-        m_outputWindows.emplace(channel->options().id, window);
-        if (m_mainQmlWindow)
-            window->open(m_mainQmlWindow);
-    }
+    auto model = new NameplateModel(20);
+    OutputWindow *window = new OutputWindow(true,
+                                            true,
+                                            model,
+                                            nullptr);
+    window->setWindowTitle(channel->options().windowName);
+    window->setGeometry(channel->options().windowGeometry);
+    window->setScreen(channel->outputWindowScreen());
+    model->setParent(window);
+    m_outputWindows.emplace(channel->options().id, window);
+    if (m_mainQmlWindow)
+        window->open(m_mainQmlWindow);
 
     if (live_channel && channel->metrics()->status() != Engine::Stopped) {
         // Then it's probably Unknown
