@@ -65,6 +65,8 @@ public slots:
     void registerChannelOutSink(const QString &channelId, QVideoSink *videoSink);
     void unRegisterChannelOutSink(const QString &channelId);
     void initializeOutputWindows(QQuickWindow *mainWindow);
+    void launchOutputWindow(const QString &channelId);
+    void closeOutputWindow(const QString &channelId);
 
 signals:
     void channelAdded(const MTGS::ChannelOptions &options);

@@ -102,6 +102,9 @@ Page {
                 winName: channel ? channel.options.windowName : "Invalid Window Name"
                 geometry: channel ? channel.options.windowGeometry : [-1, -1, -1, -1]
                 screenName: channel ? channel.outputWindowScreen.name : "Invalid Screen"
+
+                onIsWindowOpenChanged: isWindowOpen ? Engine.launchOutputWindow(channel.options.id)
+                                        : Engine.closeOutputWindow(channel.options.id)
             }
         }
 

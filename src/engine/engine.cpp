@@ -376,7 +376,8 @@ void Engine::receiveFrameNotification(const FramePtr& frame)
     OutputWindow *window = m_outputWindows.value(frame->channelId, nullptr);
     if (!window)
         return;
-    
+
+    // Send crops to each channel's output window
     for(const auto &p : frame->predictions) {
         if (!p.crops) continue;
 
@@ -679,6 +680,17 @@ void Engine::initializeOutputWindows(QQuickWindow *mainWindow)
     }
 
     m_mainQmlWindow = mainWindow;
+}
+
+void Engine::launchOutputWindow(const QString &channelId)
+{
+    m_outputWindows.value(channelId)->open(m_mainQmlWindow);
+}
+void Engine::closeOutputWindow(const QString &channelId)
+{
+    OutputWindow *window = m_outputWindows.value(channelId);
+    window->windowHandle()->setTransientParent(nullptr);
+    window->hide();
 }
 
 } // namespace MTGS

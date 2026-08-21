@@ -21,6 +21,8 @@ qt_add_resources(${PROJECT_NAME} "app_icons"
         icons/check.svg
         icons/funnel-plus.svg
         icons/menu.svg
+        icons/open-link.svg
+        icons/open-link-60.svg
         icons/pause.svg
         icons/play.svg
         icons/plus.svg

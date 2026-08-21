@@ -10,6 +10,7 @@ Pane {
     Material.elevation: 2
     padding: 20
 
+    property alias isWindowOpen: openCloseWindowButton.checked
     property string winName: "Window 1"
     property rect geometry
     property string screenName: "Primary 1"
@@ -18,11 +19,29 @@ Pane {
         spacing: 12
         anchors.fill: parent
 
-        Label {
-            text: "OUTPUT WINDOW"
-            font.weight: Font.DemiBold
-            font.pixelSize: 12
-            opacity: 0.6
+        RowLayout {
+            Label {
+                text: "OUTPUT WINDOW"
+                font.weight: Font.DemiBold
+                font.pixelSize: 12
+                opacity: 0.6
+            }
+
+            Item { Layout.fillWidth: true; Layout.fillHeight: true }
+
+            ToolButton {
+                id: openCloseWindowButton
+                checked: true
+                checkable: true
+                display: Button.IconOnly
+                icon {
+                    name: "window-new"
+                    source: "qrc:/MTGScanner/icons/" + (checked ? "open-link-60.svg" : "open-link.svg")
+                }
+                opacity: 0.6
+                Layout.preferredHeight: 32
+                Layout.preferredWidth: 32
+            }
         }
 
         Label {
