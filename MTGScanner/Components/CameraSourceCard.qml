@@ -30,7 +30,7 @@ Pane {
             text: root.description
             font.pixelSize: 20
             font.weight: Font.Bold
-            wrapMode: Text.Wrap
+            elide: Label.ElideRight
             Layout.fillWidth: true
         }
 
@@ -40,6 +40,7 @@ Pane {
             text: root.cameraId
             font.pixelSize: 13
             opacity: 0.6
+            elide: Label.ElideRight
             Layout.fillWidth: true
         }
     }
