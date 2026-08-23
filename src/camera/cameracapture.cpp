@@ -1,4 +1,5 @@
 #include "cameracapture.h"
+#include "core/frame.hpp"
 #include <qloggingcategory.h>
 
 namespace MTGS {
@@ -28,11 +29,8 @@ void CameraCapture::onVideoFrameChanged(const QVideoFrame &frame)
     if (!frame.isValid())
         return;
 
-    QImage img = frame.toImage().convertToFormat(QImage::Format_BGR888);
-    cv::Mat mat(img.height(), img.width(), CV_8UC3, const_cast<uchar*>(img.bits()), img.bytesPerLine());
-
-    FramePtr f(new Frame{});
-    f->mat = mat.clone();
+    FramePtr f = FramePtr::create();
+    f->frameOriginal = frame;
     f->sequenceId = m_frameSequenceCount++;
     f->channelId = m_channelId;
     f->cameraId = m_cameraId;

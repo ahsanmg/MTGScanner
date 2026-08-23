@@ -4,6 +4,8 @@
 #include <vector>
 #include <utility>
 
+#include <QtGui/QImage>
+
 #include <ByteTrack/Object.h>
 #include <ByteTrack/Rect.h>
 #include <ByteTrack/BYTETracker.h>
@@ -84,8 +86,9 @@ void CardProcessor::process(FramePtr frame)
                 cv::Point2f { 0.0f,  exp_h }    // bl
             };
     
-            cv::Mat nameplate;
-            perspectiveCrop(frame->mat, nameplate, src_points, dst_points);
+            const QImage &img = frame->frameImg;
+            cv::Mat nameplate(img.height(), img.width(), CV_8UC3, const_cast<uchar*>(img.bits()), img.bytesPerLine());;
+            perspectiveCrop(nameplate, nameplate, src_points, dst_points);
             card.crops->append(nameplate);
         }
     }

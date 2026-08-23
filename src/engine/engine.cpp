@@ -21,6 +21,7 @@
 #include <QGuiApplication>
 #include <QCoreApplication>
 #include <QLoggingCategory>
+#include <QtMultimedia/QVideoFrame>
 
 #include <onnxruntime_cxx_api.h>
 #include <opencv2/core/mat.hpp>
@@ -57,17 +58,17 @@ Engine::Engine(QObject *parent)
     config.path = "assets/models/yolo11n-pose.onnx";
     m_cardDetector = QSharedPointer<CardDetector>::create(nullptr, config, Ort::SessionOptions{nullptr}, Ort::MemoryInfo{nullptr});
     m_cardDetector->printModelMetadata();
-    m_cardDetector->setColors(QList<cv::Scalar>{
-        cv::Scalar(0, 0, 255),     // Red
-        cv::Scalar(0, 255, 0),     // Green
-        cv::Scalar(255, 0, 0),     // Blue
-        cv::Scalar(0, 255, 255),   // Yellow
-        cv::Scalar(255, 255, 0),   // Cyan
-        cv::Scalar(255, 0, 255),   // Magenta
-        cv::Scalar(0, 165, 255),   // Orange
-        cv::Scalar(203, 192, 255), // Pink
-        cv::Scalar(128, 0, 128),   // Purple
-        cv::Scalar(0, 255, 128)    // Light Green / Mint
+    m_cardDetector->setColors(QList<QColor>{
+        QColor(255, 0, 0),       // Red
+        QColor(0, 255, 0),       // Green
+        QColor(0, 0, 255),       // Blue
+        QColor(255, 255, 0),     // Yellow
+        QColor(0, 255, 255),     // Cyan
+        QColor(255, 0, 255),     // Magenta
+        QColor(255, 165, 0),     // Orange
+        QColor(255, 192, 203),   // Pink
+        QColor(128, 0, 128),     // Purple
+        QColor(128, 255, 0)      // Light Green / Mint
     });
 
     initializeGraph();
@@ -143,7 +144,8 @@ void Engine::initializeGraph()
             }
         }
         // TODO: Process the image. For now, we just pass it through.
-        frame->predictions = m_cardDetector->predict({frame->mat}, threshold).at(0);
+        frame->frameImg = frame->frameOriginal.toImage().convertToFormat(QImage::Format_RGB888);
+        frame->predictions = m_cardDetector->predict({ frame->frameImg }, threshold).at(0);
 
         std::get<0>(ports).try_put(frame);
         std::get<1>(ports).try_put(tf::continue_msg());
@@ -180,23 +182,15 @@ void Engine::initializeGraph()
                 return;
             }
 
-            channel->fps.update();
-            channel->visibleCards = std::count_if(f->predictions.begin(), f->predictions.end(), 
-                [] (const Prediction &p) {
-                    return p.className == "card_front" 
-                        || p.className == "card_back"; 
-                }
-            );
-            
             if (channel->cardProcessor)
                 channel->cardProcessor->process(f);
+
+            channel->fps.update();
+            channel->visibleCards = f->predictions.size();  // card processor rearranges cards and its parts.
         }
         a.release();
-        m_cardDetector->draw(f->mat, f->predictions, true, true, false);
-
-        // Send the frame
-        QImage img(f->mat.data, f->mat.cols, f->mat.rows, f->mat.step, QImage::Format_BGR888);
-        f->originalFrame = QVideoFrame(img.copy());
+        m_cardDetector->draw(f->frameImg, f->predictions, true, true, false);
+        f->frameOriginal = QVideoFrame(f->frameImg);
         QMetaObject::invokeMethod(this, "receiveFrameNotification", Qt::QueuedConnection, Q_ARG(FramePtr, f));
     };
 
@@ -371,7 +365,7 @@ void Engine::receiveFrameNotification(const FramePtr& frame)
 
     auto videoSink = channel->outVideoSink();
     if (videoSink)
-        videoSink->setVideoFrame(frame->originalFrame);
+        videoSink->setVideoFrame(frame->frameOriginal);
 
     OutputWindow *window = m_outputWindows.value(frame->channelId, nullptr);
     if (!window)

@@ -34,7 +34,7 @@ QVariant NameplateModel::data(const QModelIndex &index, int role) const
         if ((mat = m_nameplates.at(index.row())).empty())
             return QVariant();
 
-        QImage img(mat.data, mat.cols, mat.rows, mat.step, QImage::Format_BGR888);
+        QImage img(mat.data, mat.cols, mat.rows, mat.step, QImage::Format_RGB888);
         return QVariant::fromValue(img);
     }
 

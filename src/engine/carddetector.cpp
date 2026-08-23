@@ -10,6 +10,7 @@
 #include <functional>
 
 #include <QFile>
+#include <QImage>
 #include <QLoggingCategory>
 
 #include <onnxruntime_cxx_api.h>
@@ -97,7 +98,7 @@ CardDetector::CardDetector(QSharedPointer<Ort::Env> env, const CardDetectorConfi
     }
 }
 
-QList<QList<Prediction>> CardDetector::predict(const QList<cv::Mat> &batch, float threshold)
+QList<QList<Prediction>> CardDetector::predict(const QList<QImage> &batch, float threshold)
 {
     if (batch.empty())
         return {};
@@ -149,75 +150,133 @@ QList<QList<Prediction>> CardDetector::predict(const QList<cv::Mat> &batch, floa
     return predictions_list;
 }
 
-void CardDetector::draw(cv::Mat &image, const QList<Prediction> &predictions, bool drawBBox, bool drawKeypoints, bool drawSkeletons, float maskAlpha)
+void CardDetector::draw(QImage &image, const QList<Prediction> &predictions, bool drawBBox, bool drawKeypoints, bool drawSkeletons, float maskAlpha)
 {
-    if (predictions.empty())
+    Q_UNUSED(maskAlpha);
+
+    if (predictions.empty() || image.isNull())
         return;
 
-    const auto& names = m_config.names.value();
+    const auto &names = m_config.names.value();
 
-    const float font_scale = std::min(image.rows, image.cols) * 0.0008f;
-    const int font_thickness = std::max(1, static_cast<int>(std::min(image.rows, image.cols) * 0.002));
-    const float scale_factor = std::min(image.rows, image.cols) / 1280.0f;  // reference 1280px size
+    const float font_scale = std::min(image.height(), image.width()) * 0.0008f;
+    const int font_pixel_size =
+        std::max(1, static_cast<int>(std::min(image.height(), image.width()) * 0.02f));
+
+    const float scale_factor = std::min(image.height(), image.width()) / 1280.0f;
     const int line_thickness = std::max(2, static_cast<int>(3 * scale_factor));
     const int kpt_radius = std::max(3, static_cast<int>(5 * scale_factor));
 
-    for (const auto& prediction : predictions) {
-        if (prediction.classId < 0 || prediction.classId >= m_config.names.value().size())
-            continue;
+    QPainter painter(&image);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setRenderHint(QPainter::TextAntialiasing, true);
 
-        
-        // Draw bounding box
+    QFont font(QStringLiteral("Sans"));
+    font.setPixelSize(font_pixel_size);
+    painter.setFont(font);
+
+    for (const auto &prediction : predictions) {
+        const QColor color = m_colors.empty() ? QColor(255, 0, 0) : m_colors[prediction.classId % m_colors.size()];
+
+        // Bounding box + label
         if (drawBBox) {
             QString label;
-            const cv::Scalar& color = m_colors.empty() ? cv::Scalar(0, 0, 255) : m_colors[prediction.classId % m_colors.size()];
 
             if (names.empty()) {
-                label = QString("%1%").arg(static_cast<int>(prediction.confidence * 100));
+                label = QStringLiteral("%1%")
+                            .arg(static_cast<int>(prediction.confidence * 100));
             } else if (prediction.trackerId == -1) {
-                label = QString("%1 - %2%")
+                label = QStringLiteral("%1 - %2%")
                             .arg(names.at(prediction.classId))
                             .arg(static_cast<int>(prediction.confidence * 100));
             } else {
-                label = QString("%1 - %2 - %3%")
+                label = QStringLiteral("%1 - %2 - %3%")
                             .arg(names.at(prediction.classId))
                             .arg(prediction.trackerId)
                             .arg(static_cast<int>(prediction.confidence * 100));
             }
 
-            cv::rectangle(image, prediction.box, color, 2,  cv::LINE_AA);
+            const QRect box(
+                prediction.box.x,
+                prediction.box.y,
+                prediction.box.width,
+                prediction.box.height);
 
-            int baseline = 0;
-            const cv::Size text_size = cv::getTextSize(label.toStdString(), cv::FONT_HERSHEY_SIMPLEX, font_scale, font_thickness, &baseline);
-            const int label_y = std::max(prediction.box.y, text_size.height + 5);
-            const cv::Point label_tl(prediction.box.x, label_y - text_size.height - 5);
-            const cv::Point label_br(prediction.box.x + text_size.width + 5, label_y + baseline - 5);
+            // Bounding box
+            QPen box_pen(color);
+            box_pen.setWidth(2);
+            box_pen.setCosmetic(true);
+            painter.setPen(box_pen);
+            painter.setBrush(Qt::NoBrush);
+            painter.drawRect(box);
+
+            // Text metrics
+            const QFontMetrics fm(font);
+            const QRect text_rect = fm.boundingRect(label);
+
+            const int label_y = std::max(box.top(), text_rect.height() + 5);
+
+            const QRect label_rect(
+                box.left(),
+                label_y - text_rect.height() - 5,
+                text_rect.width() + 5,
+                text_rect.height() + 5 + fm.descent());
 
             // Label background
-            cv::rectangle(image, label_tl, label_br, color, cv::FILLED);
-            cv::putText(image, label.toStdString(), cv::Point(prediction.box.x + 2, label_y - 2),
-                        cv::FONT_HERSHEY_SIMPLEX, font_scale, cv::Scalar(255, 255, 255),
-                        font_thickness, cv::LINE_AA);
-        }
-        
-        const QList<KeyPoint> &kpts = prediction.keypoints;
-        const size_t num_kpts = kpts.size();
-        if (drawKeypoints) {
-            // Draw keypoints
-            for (size_t i = 0; i < num_kpts; ++i)
-                cv::circle(image, kpts[i].pt, kpt_radius, m_colors[i % m_colors.size()], -1, cv::LINE_AA);
+            painter.setPen(Qt::NoPen);
+            painter.setBrush(color);
+            painter.drawRect(label_rect);
+
+            // Label text
+            painter.setPen(Qt::white);
+            painter.drawText(
+                box.left() + 2,
+                label_y - 2,
+                label);
         }
 
+        // Keypoints
+        const QList<KeyPoint> &kpts = prediction.keypoints;
+        const size_t num_kpts = kpts.size();
+
+        if (drawKeypoints) {
+            painter.setPen(Qt::NoPen);
+
+            for (size_t i = 0; i < num_kpts; ++i) {
+                const QPointF point(
+                    kpts[i].pt.x,
+                    kpts[i].pt.y);
+
+                const QColor color = m_colors.empty() ? QColor(255, 0, 0) : m_colors[i % m_colors.size()];
+
+                painter.setBrush(color);
+                painter.drawEllipse(
+                    point,
+                    kpt_radius,
+                    kpt_radius);
+            }
+        }
+
+        // Skeleton
         if (drawSkeletons) {
-            // Draw skeleton connections
             const auto &skeleton = m_config.kptSkeleton.value();
-            for (size_t j = 0; j < skeleton.size(); ++j) {
-                const auto [src, dst] = skeleton[j];
-                if (src < num_kpts && dst < num_kpts) {
-                    cv::line(image, kpts[src].pt, kpts[dst].pt,
-                             m_colors[src % m_colors.size()],
-                             line_thickness, cv::LINE_AA);
-                }
+            for (const auto &[src, dst] : skeleton) {
+                if (src >= num_kpts || dst >= num_kpts)
+                    continue;
+
+                const QColor color = m_colors.empty() ? QColor(255, 0, 0) : m_colors[src % m_colors.size()];
+
+                QPen pen(color);
+                pen.setWidth(line_thickness);
+                pen.setCapStyle(Qt::RoundCap);
+                pen.setJoinStyle(Qt::RoundJoin);
+
+                painter.setPen(pen);
+                painter.setBrush(Qt::NoBrush);
+
+                painter.drawLine(
+                    QPointF(kpts[src].pt.x, kpts[src].pt.y),
+                    QPointF(kpts[dst].pt.x, kpts[dst].pt.y));
             }
         }
     }
@@ -271,7 +330,7 @@ bool CardDetector::hasDynamicShape()
     return false;
 }
 
-void CardDetector::setColors(const QList<cv::Scalar> &colors)
+void CardDetector::setColors(const QList<QColor> &colors)
 {
     m_colors = colors;
 }
@@ -342,7 +401,7 @@ bool CardDetector::validateAndFillConfig(CardDetectorConfig &config)
     return true;
 }
 
-std::tuple<QList<cv::Mat>, cv::Size, std::vector<int64_t>> CardDetector::preProcess(const QList<cv::Mat> &batch, int batchIndx, int batchSize)
+std::tuple<QList<cv::Mat>, cv::Size, std::vector<int64_t>> CardDetector::preProcess(const QList<QImage> &batch, int batchIndx, int batchSize)
 {
     auto shape = m_session.GetInputTypeInfo(0).GetTensorTypeAndShapeInfo().GetShape();
     int max_h = shape.at(2);
@@ -356,7 +415,7 @@ std::tuple<QList<cv::Mat>, cv::Size, std::vector<int64_t>> CardDetector::preProc
                 max_h = m_config.imgsz->at(0);
             } else {
                 for (size_t s = 0; s < batchSize; ++s)
-                    max_h = std::max(max_h, batch[batchIndx + s].rows);
+                    max_h = std::max(max_h, batch[batchIndx + s].height());
 
                 if (max_h % model_stride != 0)
                     max_h = ((max_h / model_stride) + 1) * model_stride;
@@ -370,7 +429,7 @@ std::tuple<QList<cv::Mat>, cv::Size, std::vector<int64_t>> CardDetector::preProc
                 max_w = m_config.imgsz->at(1);
             } else {
                 for (size_t s = 0; s < batchSize; ++s)
-                    max_w = std::max(max_w, batch[batchIndx + s].cols);
+                    max_w = std::max(max_w, batch[batchIndx + s].width());
 
                 if (max_w % model_stride != 0)
                     max_w = ((max_w / model_stride) + 1) * model_stride;
@@ -384,9 +443,9 @@ std::tuple<QList<cv::Mat>, cv::Size, std::vector<int64_t>> CardDetector::preProc
     QList<cv::Mat> res_batch;
     const cv::Size new_size(shape.at(3), shape.at(2));
     for (size_t s = 0; s < batchSize; ++s) {
-        cv::Mat img;
-        letterBox(batch[batchIndx + s], img, new_size);
-        cv::cvtColor(img, img, cv::COLOR_BGR2RGB);
+        QImage rgb = batch[batchIndx + s];
+        cv::Mat img(rgb.height(), rgb.width(), CV_8UC3, const_cast<uchar*>(rgb.bits()), rgb.bytesPerLine());
+        letterBox(img, img, new_size);
         img.convertTo(img, CV_32FC1, 1.0f / 255.0f);
 
         res_batch.append(img);
@@ -395,7 +454,7 @@ std::tuple<QList<cv::Mat>, cv::Size, std::vector<int64_t>> CardDetector::preProc
     return { res_batch, new_size, shape };
 }
 
-QList<QList<Prediction>> CardDetector::postProcess(const QList<cv::Mat> &batch, int batchIndx, int batchSize, cv::Size resizedSize, const std::vector<Ort::Value> &outputTensors, float threshold)
+QList<QList<Prediction>> CardDetector::postProcess(const QList<QImage> &batch, int batchIndx, int batchSize, cv::Size resizedSize, const std::vector<Ort::Value> &outputTensors, float threshold)
 {
     const auto &tensor = outputTensors.at(0);
     const auto &shape0 = tensor.GetTensorTypeAndShapeInfo().GetShape();
@@ -491,7 +550,7 @@ QList<QList<Prediction>> CardDetector::postProcess(const QList<cv::Mat> &batch, 
         // Apply Non-Maximum Suppression (NMS) to eliminate redundant detections
         const QList<int> indices = nmsBBoxes(nms_boxes, scores, threshold, m_config.iouThreshold.value_or(0.4f));
 
-        const cv::Size orig_size(batch[batchIndx + b].cols, batch[batchIndx + b].rows);
+        const cv::Size orig_size(batch[batchIndx + b].width(), batch[batchIndx + b].height());
         const float gain = std::min(static_cast<float>(resizedSize.height) / orig_size.height, static_cast<float>(resizedSize.width) / orig_size.width);
         const int pad_x = std::round((resizedSize.width - orig_size.width * gain) / 2.0f);
         const int pad_y = std::round((resizedSize.height - orig_size.height * gain) / 2.0f);

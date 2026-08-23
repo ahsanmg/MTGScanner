@@ -21,9 +21,9 @@ struct Frame {
     QString cameraId;
     QTime timestamp;
 
-    cv::Mat mat;
+    QImage frameImg;
+    QVideoFrame frameOriginal;
     QList<Prediction> predictions;
-    QVideoFrame originalFrame;
 };
 
 using FramePtr = QSharedPointer<Frame>;

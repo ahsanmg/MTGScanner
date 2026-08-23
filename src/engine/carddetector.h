@@ -37,19 +37,19 @@ struct CardDetectorConfig {
 class CardDetector {
 public:
     explicit CardDetector(QSharedPointer<Ort::Env> env, const CardDetectorConfig &config, Ort::SessionOptions sessionOptions, Ort::MemoryInfo memoryInfo);
-    QList<QList<Prediction>> predict(const QList<cv::Mat> &batch, float threshold = 0.4f);
-    void draw(cv::Mat &image, const QList<Prediction> &predictions, bool drawBBox = true, bool drawKeypoints = true, bool drawSkeletons = true, float maskAlpha = 0.3f);
+    QList<QList<Prediction>> predict(const QList<QImage> &batch, float threshold = 0.4f);
+    void draw(QImage &image, const QList<Prediction> &predictions, bool drawBBox = true, bool drawKeypoints = true, bool drawSkeletons = true, float maskAlpha = 0.3f);
     void printModelMetadata();
 
     bool hasDynamicBatch();
     bool hasDynamicShape();
 
-    void setColors(const QList<cv::Scalar> &colors);
+    void setColors(const QList<QColor> &colors);
 
 private:
     bool validateAndFillConfig(CardDetectorConfig &config);
-    std::tuple<QList<cv::Mat>, cv::Size, std::vector<int64_t>> preProcess(const QList<cv::Mat> &batch, int batchIndx, int batchSize);
-    QList<QList<Prediction>> postProcess(const QList<cv::Mat> &batch, int batchIndx, int batchSize, cv::Size resizedSize, const std::vector<Ort::Value> &outputTensor, float threshold = 0.4f);
+    std::tuple<QList<cv::Mat>, cv::Size, std::vector<int64_t>> preProcess(const QList<QImage> &batch, int batchIndx, int batchSize);
+    QList<QList<Prediction>> postProcess(const QList<QImage> &batch, int batchIndx, int batchSize, cv::Size resizedSize, const std::vector<Ort::Value> &outputTensor, float threshold = 0.4f);
 
 private:
     CardDetectorConfig m_config;
@@ -64,7 +64,7 @@ private:
     std::vector<const char *> m_outputNamesP;
     QMap<std::string, std::string> m_modelMetadata;
 
-    QList<cv::Scalar> m_colors;
+    QList<QColor> m_colors;
 };
 
 } // namespace MTGSs
