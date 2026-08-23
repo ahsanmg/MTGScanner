@@ -10,7 +10,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/core/mat.hpp>
 
-#include <core/prediction.hpp>
+#include <prediction.hpp>
 
 namespace MTGS {
     

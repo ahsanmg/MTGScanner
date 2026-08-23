@@ -32,7 +32,7 @@
 
 #include <core/frame.hpp>
 #include <core/image.hpp>
-#include <core/prediction.hpp>
+#include <prediction.hpp>
 #include <engine/channelraw.hpp>
 #include <engine/carddetector.h>
 #include <engine/cardprocessor.h>

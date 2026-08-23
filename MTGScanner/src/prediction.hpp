@@ -9,9 +9,6 @@
 #include <QtCore/QString>
 #include <QtGui/QImage>
 
-#include <opencv2/core/mat.hpp>
-#include <opencv2/core/types.hpp>
-
 namespace MTGS {
 
 struct KeyPoint {

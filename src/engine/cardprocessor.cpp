@@ -17,8 +17,8 @@
 
 #include <core/frame.hpp>
 #include <core/image.hpp>
-#include <core/prediction.hpp>
 #include <core/constants.hpp>
+#include <prediction.hpp>
 
 namespace MTGS {
 

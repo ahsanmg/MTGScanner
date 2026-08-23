@@ -17,7 +17,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
-#include <core/prediction.hpp>
+#include <prediction.hpp>
 
 namespace MTGS {
 

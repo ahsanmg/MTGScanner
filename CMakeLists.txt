@@ -28,7 +28,6 @@ qt_add_executable(${PROJECT_NAME}App
     src/camera/cameramanager.h
     src/camera/cameramanager.cpp
     src/core/frame.hpp
-    src/core/prediction.hpp
     src/engine/carddetector.cpp
     src/engine/channelraw.hpp
     src/engine/cardprocessor.h

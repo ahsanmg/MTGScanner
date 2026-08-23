@@ -21,12 +21,11 @@
 #include <opencv2/imgproc.hpp>
 #include <yaml-cpp/yaml.h>
 
-#include <core/prediction.hpp>
 #include <core/image.hpp>
+#include <prediction.hpp>
 #include "carddetector.h"
 
 namespace MTGS {
-
 
 Q_STATIC_LOGGING_CATEGORY(logger, "mtgs.card.detector")
 CardDetector::CardDetector(QSharedPointer<Ort::Env> env, const CardDetectorConfig &config, Ort::SessionOptions sessionOptions, Ort::MemoryInfo memoryInfo)
