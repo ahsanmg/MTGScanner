@@ -21,11 +21,11 @@ public:
     QVariant data(const QModelIndex &index, int role) const override;
 
 public slots:
-    void addNameplate(size_t trackedCardId, cv::Mat image);
+    void addNameplate(size_t trackedCardId, QImage image);
 
 private:
     QList<size_t> m_trackedCardIds;
-    QList<cv::Mat> m_nameplates;
+    QList<QImage> m_nameplates;
     int m_maxNameplates = 10;
 };
 

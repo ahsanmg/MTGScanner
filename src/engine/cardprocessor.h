@@ -22,12 +22,10 @@ public:
     explicit CardProcessor(int fps = 30, int trackBufferSize = 30, float trackThresh = 0.15f, float highThresh = 0.4f, float matchThresh = 0.8f);
     void process(FramePtr frame);
 
-    static void perspectiveCrop(const cv::Mat &img, cv::Mat &res, const std::array<cv::Point2f, 4> &srcPoints, const std::array<cv::Point2f, 4> &dstPoints);
-
 private:
     QList<Prediction> relateSubPredictions(const QList<Prediction> &predictions);
     // Checks if inner is inside outer by the percentage.
-    bool intersects(const cv::Rect &inner, const cv::Rect &outer, float percent = 0.90f);
+    bool intersects(const QRect &inner, const QRect &outer, float percent = 0.90f);
 
 private:
     QHash<int, TrackedCard> m_trackedCards;

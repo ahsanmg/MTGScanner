@@ -4,12 +4,17 @@
 #include <QtCore/QSettings>
 #include <QtCore/QStringView>
 #include <QtGui/QIcon>
+#include <QtGui/QImage>
 #include <QtGui/QPainter>
+#include <QtGui/QPolygon>
 #include <QtSvg/QSvgRenderer>
+#include <QtMultimedia/QVideoFrame>
+#include <QtMultimedia/QVideoFrameFormat>
 
 #include <opencv2/core/hal/interface.h>
 #include <opencv2/core/types.hpp>
 #include <opencv2/core/mat.hpp>
+#include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
 #include <core/prediction.hpp>
@@ -39,6 +44,43 @@ inline QIcon indexedWindowIcon(const QString &path, int index)
     }
 
     return icon;
+}
+
+inline void perspectiveCrop(const cv::Mat &img, cv::Mat &res, const std::array<cv::Point2f, 4> &srcPoints, const std::array<cv::Point2f, 4> &dstPoints)
+{
+    if (img.empty() || srcPoints.empty() || dstPoints.empty())
+        return;
+
+    const int h = dstPoints.at(3).y - dstPoints.at(0).y;
+    const int w = dstPoints.at(1).x - dstPoints.at(0).x;
+
+    cv::Mat tr = cv::getPerspectiveTransform(srcPoints, dstPoints);
+    cv::warpPerspective(img, res, tr, cv::Size(w, h));
+}
+
+inline void perspectiveCrop(const QImage &img, QImage &res,
+    const QPolygonF &src,
+    const QPolygonF &dst)
+{
+    if (img.isNull())
+        return;
+
+    const int w = qRound(dst[1].x() - dst[0].x());
+    const int h = qRound(dst[3].y() - dst[0].y());
+    if (w <= 0 || h <= 0)
+        return;
+
+    QTransform transform;
+    if (!QTransform::quadToQuad(src, dst, transform))
+        return;
+
+    res = QImage(w, h, QImage::Format_RGB888);
+    res.fill(Qt::black);
+
+    QPainter painter(&res);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+    painter.setTransform(transform);
+    painter.drawImage(0, 0, img);
 }
 
 inline void letterBox(const cv::Mat& image, cv::Mat& outImage,
@@ -107,12 +149,12 @@ inline void scaleCoords(const cv::Size &resizedImageSize,
                 KeyPoint &point,
                 float gain, int padX, int padY, bool clip = true)
 {
-    point.pt.x = std::round((point.pt.x - padX) / gain);
-    point.pt.y = std::round((point.pt.y - padY) / gain);
+    point.pt.setX(std::round((point.pt.x() - padX) / gain));
+    point.pt.setY(std::round((point.pt.y() - padY) / gain));
 
     if (clip) {
-        point.pt.x = std::clamp<float>(point.pt.x, 0.0f, originalImageSize.width);
-        point.pt.y = std::clamp<float>(point.pt.y, 0.0f, originalImageSize.height);
+        point.pt.setX(std::clamp<float>(point.pt.x(), 0.0f, originalImageSize.width));
+        point.pt.setY(std::clamp<float>(point.pt.y(), 0.0f, originalImageSize.height));
     }
 }
 

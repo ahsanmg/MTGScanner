@@ -4,6 +4,8 @@
 #include <vector>
 #include <utility>
 
+#include <QtCore/QPoint>
+#include <QtGui/QPolygonF>
 #include <QtGui/QImage>
 
 #include <ByteTrack/Object.h>
@@ -14,6 +16,7 @@
 #include <opencv2/imgproc.hpp>
 
 #include <core/frame.hpp>
+#include <core/image.hpp>
 #include <core/prediction.hpp>
 #include <core/constants.hpp>
 
@@ -38,10 +41,10 @@ void CardProcessor::process(FramePtr frame)
     for (size_t i = 0; i < frame->predictions.size(); ++i) {
         const auto &card = frame->predictions.at(i);
         byte_track::Rect<float> box { 
-            static_cast<float>(card.box.x),
-            static_cast<float>(card.box.y),
-            static_cast<float>(card.box.width),
-            static_cast<float>(card.box.height)
+            static_cast<float>(card.box.x()),
+            static_cast<float>(card.box.y()),
+            static_cast<float>(card.box.width()),
+            static_cast<float>(card.box.height())
         };
         objects.emplace_back(box, card.classId, card.confidence);
         tracked_indices.push_back(i);
@@ -58,38 +61,38 @@ void CardProcessor::process(FramePtr frame)
         // the area actually changes (i.e. the card is closing to the camera).
         TrackedCard &tracked_card = m_trackedCards[card.trackerId];
         tracked_card.lostCount = 0; // reset
+        const int box_area = card.box.size().width() * card.box.size().height();
         bool can_crop = tracked_card.retries < MAX_CROP_RETRIES
-                        && card.box.area() > tracked_card.lastBoxArea * 1.35f;
+                        && box_area > tracked_card.lastBoxArea * 1.35f;
         if (!can_crop || !card.subPredictions)
             continue;
 
         if (!card.crops)
-            card.crops = QList<cv::Mat>();
+            card.crops = QList<QImage>();
 
         tracked_card.retries++;
-        tracked_card.lastBoxArea = card.box.area();
+        tracked_card.lastBoxArea = box_area;
 
         for (const auto &np : card.subPredictions.value()) {
             // NOTE: We assume all are titles
             const auto &points = np.keypoints;
-            std::array<cv::Point2f, 4> src_points = {
+            QPolygonF src_points = {
                 points.at(0).pt, points.at(1).pt,
                 points.at(2).pt, points.at(3).pt
             };
 
             const float exp_w = static_cast<float>(TITLE_WIDTH);
             const float exp_h = static_cast<float>(TITLE_HEIGHT);
-            std::array<cv::Point2f, 4> dst_points = {
-                cv::Point2f { 0.0f,  0.0f },    // tl
-                cv::Point2f { exp_w, 0.0f },    // tr
-                cv::Point2f ( exp_w, exp_h ),   // br
-                cv::Point2f { 0.0f,  exp_h }    // bl
+            QPolygonF dst_points = {
+                QPointF { 0.0f,  0.0f },    // tl
+                QPointF { exp_w, 0.0f },    // tr
+                QPointF ( exp_w, exp_h ),   // br
+                QPointF { 0.0f,  exp_h }    // bl
             };
     
-            const QImage &img = frame->frameImg;
-            cv::Mat nameplate(img.height(), img.width(), CV_8UC3, const_cast<uchar*>(img.bits()), img.bytesPerLine());;
-            perspectiveCrop(nameplate, nameplate, src_points, dst_points);
-            card.crops->append(nameplate);
+            QImage img = frame->frameImg, crop;
+            perspectiveCrop(img, crop, src_points, dst_points);
+            card.crops->append(crop);
         }
     }
 
@@ -98,18 +101,6 @@ void CardProcessor::process(FramePtr frame)
         if (tc.lostCount > m_maxTimeLost)
             m_trackedCards.remove(key);
     }
-}
-
-void CardProcessor::perspectiveCrop(const cv::Mat &img, cv::Mat &res, const std::array<cv::Point2f, 4> &srcPoints, const std::array<cv::Point2f, 4> &dstPoints)
-{
-    if (img.empty() || srcPoints.empty() || dstPoints.empty())
-        return;
-
-    const int h = dstPoints.at(3).y - dstPoints.at(0).y;
-    const int w = dstPoints.at(1).x - dstPoints.at(0).x;
-
-    cv::Mat tr = cv::getPerspectiveTransform(srcPoints, dstPoints);
-    cv::warpPerspective(img, res, tr, cv::Size(w, h));
 }
 
 QList<Prediction> CardProcessor::relateSubPredictions(const QList<Prediction> &predictions)
@@ -146,14 +137,14 @@ QList<Prediction> CardProcessor::relateSubPredictions(const QList<Prediction> &p
     return final_predictions;
 }
 
-bool CardProcessor::intersects(const cv::Rect &inner, const cv::Rect &outer, float percent)
+bool CardProcessor::intersects(const QRect &inner, const QRect &outer, float percent)
 {
-    const double inner_area = inner.area();
+    const double inner_area = inner.size().width() * inner.size().height();
     if (inner_area == 0)
         return false;
 
-    cv::Rect intersection = inner & outer;
-    const double intersection_area = intersection.area();
+    QRect intersection = inner.intersected(outer);
+    const double intersection_area = intersection.size().width() * intersection.size().width();
     const double overlap_ratio = intersection_area / inner_area;
     return overlap_ratio >= percent;
 }

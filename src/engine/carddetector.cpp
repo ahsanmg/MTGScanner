@@ -196,11 +196,7 @@ void CardDetector::draw(QImage &image, const QList<Prediction> &predictions, boo
                             .arg(static_cast<int>(prediction.confidence * 100));
             }
 
-            const QRect box(
-                prediction.box.x,
-                prediction.box.y,
-                prediction.box.width,
-                prediction.box.height);
+            const QRect &box = prediction.box;
 
             // Bounding box
             QPen box_pen(color);
@@ -243,10 +239,7 @@ void CardDetector::draw(QImage &image, const QList<Prediction> &predictions, boo
             painter.setPen(Qt::NoPen);
 
             for (size_t i = 0; i < num_kpts; ++i) {
-                const QPointF point(
-                    kpts[i].pt.x,
-                    kpts[i].pt.y);
-
+                const QPointF &point = kpts[i].pt;
                 const QColor color = m_colors.empty() ? QColor(255, 0, 0) : m_colors[i % m_colors.size()];
 
                 painter.setBrush(color);
@@ -274,9 +267,7 @@ void CardDetector::draw(QImage &image, const QList<Prediction> &predictions, boo
                 painter.setPen(pen);
                 painter.setBrush(Qt::NoBrush);
 
-                painter.drawLine(
-                    QPointF(kpts[src].pt.x, kpts[src].pt.y),
-                    QPointF(kpts[dst].pt.x, kpts[dst].pt.y));
+                painter.drawLine(kpts[src].pt, kpts[dst].pt);
             }
         }
     }
@@ -534,8 +525,8 @@ QList<QList<Prediction>> CardDetector::postProcess(const QList<QImage> &batch, i
             for (int k = 0; k < num_keypoints; ++k) {
                 KeyPoint keypoint;
                 const int kp_offset = 4 + out_num_classes + k * num_kp_features;
-                keypoint.pt.x       = batch_offsetptr[(0 + kp_offset) * out_num_detections + col];
-                keypoint.pt.y       = batch_offsetptr[(1 + kp_offset) * out_num_detections + col];
+                keypoint.pt.setX(batch_offsetptr[(0 + kp_offset) * out_num_detections + col]);
+                keypoint.pt.setY(batch_offsetptr[(1 + kp_offset) * out_num_detections + col]);
                 keypoint.visibility = batch_offsetptr[(2 + kp_offset) * out_num_detections + col];
                 keypoints.push_back(keypoint);
             }
@@ -561,9 +552,10 @@ QList<QList<Prediction>> CardDetector::postProcess(const QList<QImage> &batch, i
         for (const int idx : indices) {
             scaleCoords(resizedSize, orig_size, boxes[idx], gain, pad_x, pad_y);
             scaleCoords(resizedSize, orig_size, keypoints_list[idx], gain, pad_x, pad_y);
+            const cv::Rect2f &b = boxes[idx];
 
             Prediction prediction;
-            prediction.box = boxes[idx];
+            prediction.box = QRect(b.x, b.y, b.width, b.height);
             prediction.keypoints = keypoints_list[idx];
             prediction.confidence = scores[idx];
             prediction.classId = class_ids[idx];

@@ -29,14 +29,8 @@ QVariant NameplateModel::data(const QModelIndex &index, int role) const
         || index.row() >= m_nameplates.size())
         return QVariant();
 
-    if (role == Qt::DecorationRole) {
-        cv::Mat mat;
-        if ((mat = m_nameplates.at(index.row())).empty())
-            return QVariant();
-
-        QImage img(mat.data, mat.cols, mat.rows, mat.step, QImage::Format_RGB888);
-        return QVariant::fromValue(img);
-    }
+    if (role == Qt::DecorationRole)
+        return QVariant::fromValue(m_nameplates.at(index.row()));
 
     if (role == Qt::SizeHintRole)
         return QSize(312, 44);
@@ -44,7 +38,7 @@ QVariant NameplateModel::data(const QModelIndex &index, int role) const
     return QVariant();
 }
 
-void NameplateModel::addNameplate(size_t trackedCardId, cv::Mat image)
+void NameplateModel::addNameplate(size_t trackedCardId, QImage image)
 {
     if (m_nameplates.size() >= m_maxNameplates * 2) {
         int first = m_maxNameplates - 1;
