@@ -1,6 +1,9 @@
 #include "cameracapture.h"
-#include "core/frame.hpp"
-#include <qloggingcategory.h>
+
+#include <QtGui/QImage>
+#include <QtCore/QLoggingCategory>
+
+#include <core/frame.hpp>
 
 namespace MTGS {
 
@@ -31,6 +34,9 @@ void CameraCapture::onVideoFrameChanged(const QVideoFrame &frame)
 
     FramePtr f = FramePtr::create();
     f->frameOriginal = frame;
+    // I wanted to avoid conversions of skipped frames. But moving this to the processor causes segfault
+    // https://codebrowser.dev/qt6/qtmultimedia/src/plugins/multimedia/gstreamer/mediacapture/qgstreamerimagecapture.cpp.html#273
+    f->frameImg = frame.toImage();
     f->sequenceId = m_frameSequenceCount++;
     f->channelId = m_channelId;
     f->cameraId = m_cameraId;

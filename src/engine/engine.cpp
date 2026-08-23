@@ -143,8 +143,8 @@ void Engine::initializeGraph()
                 threshold = a->second->options.detectionThreshold;
             }
         }
-        // TODO: Process the image. For now, we just pass it through.
-        frame->frameImg = frame->frameOriginal.toImage().convertToFormat(QImage::Format_RGB888);
+
+        frame->frameImg = frame->frameImg.convertToFormat(QImage::Format_RGB888);
         frame->predictions = m_cardDetector->predict({ frame->frameImg }, threshold).at(0);
 
         std::get<0>(ports).try_put(frame);
@@ -224,14 +224,6 @@ Channel *Engine::createChannel()
     channel->setOutputWindowScreen(QGuiApplication::primaryScreen());
 
     QQmlEngine::setObjectOwnership(channel, QQmlEngine::CppOwnership);
-
-    // Debug channel destruction
-#ifndef NDEBUG
-    connect(channel, &Channel::destroyed, [id = channel->options().id] () {
-        qCCritical(engine_logger) << "Channel got destroyed, named" << id;
-    });
-#endif
-
     return channel;
 }
 
@@ -385,6 +377,13 @@ void Engine::addChannel(AbstractChannel *channel, int status)
 {
     if (!channel)
         return;
+
+    // Debug channel destruction
+#ifndef NDEBUG
+    connect(channel, &Channel::destroyed, [=] () {
+        qCCritical(engine_logger) << QString("Channel got destroyed, named %1, id %2.").arg(channel->options().name).arg(channel->options().id);
+    });
+#endif
 
     Channel *live_channel = qobject_cast<Channel*>(channel);
     DemoChannel *demo_channel = qobject_cast<DemoChannel*>(channel);
