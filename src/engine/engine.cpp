@@ -2,9 +2,10 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <qvideosink.h>
 #include <tuple>
 
+#include <QtCore/qassert.h>
+#include <QtMultimedia/QVideoSink>
 #include <QUrl>
 #include <QFile>
 #include <QList>
@@ -190,8 +191,7 @@ void Engine::initializeGraph()
             channel->visibleCards = f->predictions.size();  // card processor rearranges cards and its parts.
         }
         a.release();
-        m_cardDetector->draw(f->frameImg, f->predictions, true, true, false);
-        f->frameOriginal = QVideoFrame(f->frameImg);
+
         QMetaObject::invokeMethod(this, "receiveFrameNotification", Qt::QueuedConnection, Q_ARG(FramePtr, f));
     };
 
@@ -356,21 +356,23 @@ void Engine::receiveFrameNotification(const FramePtr& frame)
         return;
     }
 
-    auto videoSink = channel->outVideoSink();
-    if (videoSink)
-        videoSink->setVideoFrame(frame->frameOriginal);
-
     OutputWindow *window = m_outputWindows.value(frame->channelId, nullptr);
-    if (!window)
-        return;
+    if (window) {
+        // Send crops to each channel's output window
+        for(const auto &p : frame->predictions) {
+            if (!p.crops) continue;
 
-    // Send crops to each channel's output window
-    for(const auto &p : frame->predictions) {
-        if (!p.crops) continue;
+            for (const auto &crop : p.crops.value())
+                if (auto model = window->model())
+                    model->addNameplate(p.trackerId, crop);
+        }
+    }
 
-        for (const auto &crop : p.crops.value())
-            if (auto model = window->model())
-                model->addNameplate(p.trackerId, crop);
+    auto videoSink = channel->outVideoSink();
+    if (videoSink) {
+        videoSink->setVideoFrame(frame->frameOriginal);
+        if (m_predictionOverlay)
+            m_predictionOverlay->updatePredictions(std::move(frame->predictions));
     }
 }
 
@@ -649,6 +651,12 @@ void Engine::stopChannel(const QString &channelId)
     }
 }
 
+void Engine::registerPredictionOverlay(PredictionOverlay *overlay)
+{
+    Q_ASSERT_X(overlay, "Engine::registerPredictionOverlay", "Invalid overlay pointer passed");
+    m_predictionOverlay = overlay;
+}
+
 void Engine::registerChannelOutSink(const QString &channelId, QVideoSink *videoSink)
 {
     if (!m_channels.contains(channelId)) {
@@ -666,8 +674,11 @@ void Engine::unRegisterChannelOutSink(const QString &channelId)
         return;
 
     // Push an empty frame to clear the last channel's frame
-    if (QVideoSink *sink = channel->outVideoSink())
+    if (QVideoSink *sink = channel->outVideoSink()) {
         sink->setVideoFrame(QVideoFrame());
+        if (m_predictionOverlay) // and overlay
+            m_predictionOverlay->updatePredictions(QList<Prediction>());
+    }
 
     channel->setOutVideoSink(nullptr);
 }

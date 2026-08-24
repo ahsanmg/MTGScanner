@@ -78,6 +78,10 @@ Page {
 
             Layout.fillWidth: true
             Layout.fillHeight: true
+
+            Component.onCompleted: {
+                Engine.registerPredictionOverlay(overlay)
+            }
         }
 
         // Configuration Section

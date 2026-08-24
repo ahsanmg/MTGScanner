@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtQuick.Layouts
 import QtMultimedia
+import MTGScanner
 
 Pane {
     id: root
@@ -11,6 +12,7 @@ Pane {
     padding: 20
 
     property alias videoOutput: videoOutput
+    property alias overlay: overlay
 
     Rectangle {
         anchors.fill: parent
@@ -23,6 +25,13 @@ Pane {
             id: videoOutput
             anchors.fill: parent
             fillMode: VideoOutput.PreserveAspectFit
+
+            PredictionOverlay {
+                id: overlay
+                anchors.centerIn: parent
+                width: videoOutput.contentRect.width
+                height: videoOutput.contentRect.height
+            }
         }
     }
 }

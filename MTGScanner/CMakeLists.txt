@@ -10,6 +10,8 @@ qt_add_qml_module(${PROJECT_NAME}
         src/channelmetrics.h
         src/channelmetrics.cpp
         src/framespersecond.hpp
+        src/predictionoverlay.h
+        src/predictionoverlay.cpp
 )
 
 qt_add_resources(${PROJECT_NAME} "app_icons"

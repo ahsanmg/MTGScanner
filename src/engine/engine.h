@@ -23,6 +23,7 @@
 #include <engine/channelraw.hpp>
 #include <output/outputwindow.h>
 #include <channel.hpp>
+#include <predictionoverlay.h>
 
 namespace MTGS {
 
@@ -62,6 +63,7 @@ public slots:
     void deleteChannel(const MTGS::ChannelOptions &options);
     void startChannel(const QString &channelId);
     void stopChannel(const QString &channelId);
+    void registerPredictionOverlay(PredictionOverlay *overlay);
     void registerChannelOutSink(const QString &channelId, QVideoSink *videoSink);
     void unRegisterChannelOutSink(const QString &channelId);
     void initializeOutputWindows(QQuickWindow *mainWindow);
@@ -94,6 +96,7 @@ private:
     QHash<QString, OutputWindow*> m_outputWindows;
     QList<QString> m_channelIdIndexMap;
 
+    PredictionOverlay *m_predictionOverlay = nullptr;
     AvailableCamerasModel *m_availableCamerasModel = nullptr;
     CameraManager *m_cameraMngr = nullptr;
     ChannelModel *m_channelsModel = nullptr;
