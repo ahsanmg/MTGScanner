@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <qvideosink.h>
 #include <tuple>
 
 #include <QUrl>
@@ -660,10 +661,15 @@ void Engine::registerChannelOutSink(const QString &channelId, QVideoSink *videoS
 
 void Engine::unRegisterChannelOutSink(const QString &channelId)
 {
-    if (!m_channels.contains(channelId))
+    auto channel = m_channels.value(channelId, nullptr);
+    if (!channel)
         return;
 
-    m_channels.value(channelId)->setOutVideoSink(nullptr);
+    // Push an empty frame to clear the last channel's frame
+    if (QVideoSink *sink = channel->outVideoSink())
+        sink->setVideoFrame(QVideoFrame());
+
+    channel->setOutVideoSink(nullptr);
 }
 
 void Engine::initializeOutputWindows(QQuickWindow *mainWindow)
