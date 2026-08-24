@@ -60,18 +60,6 @@ Engine::Engine(QObject *parent)
     config.path = "assets/models/yolo11n-pose.onnx";
     m_cardDetector = QSharedPointer<CardDetector>::create(nullptr, config, Ort::SessionOptions{nullptr}, Ort::MemoryInfo{nullptr});
     m_cardDetector->printModelMetadata();
-    m_cardDetector->setColors(QList<QColor>{
-        QColor(255, 0, 0),       // Red
-        QColor(0, 255, 0),       // Green
-        QColor(0, 0, 255),       // Blue
-        QColor(255, 255, 0),     // Yellow
-        QColor(0, 255, 255),     // Cyan
-        QColor(255, 0, 255),     // Magenta
-        QColor(255, 165, 0),     // Orange
-        QColor(255, 192, 203),   // Pink
-        QColor(128, 0, 128),     // Purple
-        QColor(128, 255, 0)      // Light Green / Mint
-    });
 
     initializeGraph();
 
@@ -633,7 +621,7 @@ void Engine::startChannel(const QString &channelId)
     auto channel = m_channels.value(channelId);
     if (channel->metrics()->status() != ChannelStatus::Running) {
         channel->start();
-        // EngineWoker will change the status
+        // Connections will change the status
     }
 }
 
@@ -647,7 +635,7 @@ void Engine::stopChannel(const QString &channelId)
     auto channel = m_channels.value(channelId);
     if (channel->metrics()->status() != ChannelStatus::Stopped) {
         channel->stop();
-        // EngineWoker will change the status
+        // Connections will change the status
     }
 }
 
@@ -676,7 +664,7 @@ void Engine::unRegisterChannelOutSink(const QString &channelId)
     // Push an empty frame to clear the last channel's frame
     if (QVideoSink *sink = channel->outVideoSink()) {
         sink->setVideoFrame(QVideoFrame());
-        if (m_predictionOverlay) // and overlay
+        if (m_predictionOverlay) // and an empty prediction list for the overlay
             m_predictionOverlay->updatePredictions(QList<Prediction>());
     }
 
@@ -685,9 +673,8 @@ void Engine::unRegisterChannelOutSink(const QString &channelId)
 
 void Engine::initializeOutputWindows(QQuickWindow *mainWindow)
 {
-    for (auto [_, window] : m_outputWindows.asKeyValueRange()) {
+    for (auto [_, window] : m_outputWindows.asKeyValueRange())
         window->open(mainWindow);
-    }
 
     m_mainQmlWindow = mainWindow;
 }

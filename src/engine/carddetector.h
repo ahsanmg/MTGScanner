@@ -38,13 +38,10 @@ class CardDetector {
 public:
     explicit CardDetector(QSharedPointer<Ort::Env> env, const CardDetectorConfig &config, Ort::SessionOptions sessionOptions, Ort::MemoryInfo memoryInfo);
     QList<QList<Prediction>> predict(const QList<QImage> &batch, float threshold = 0.4f);
-    void draw(QImage &image, const QList<Prediction> &predictions, bool drawBBox = true, bool drawKeypoints = true, bool drawSkeletons = true, float maskAlpha = 0.3f);
     void printModelMetadata();
 
     bool hasDynamicBatch();
     bool hasDynamicShape();
-
-    void setColors(const QList<QColor> &colors);
 
 private:
     bool validateAndFillConfig(CardDetectorConfig &config);
@@ -63,8 +60,6 @@ private:
     std::vector<const char *> m_inputNamesP;
     std::vector<const char *> m_outputNamesP;
     QMap<std::string, std::string> m_modelMetadata;
-
-    QList<QColor> m_colors;
 };
 
 } // namespace MTGSs
