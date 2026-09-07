@@ -144,7 +144,7 @@ bool CardProcessor::intersects(const QRect &inner, const QRect &outer, float per
         return false;
 
     QRect intersection = inner.intersected(outer);
-    const double intersection_area = intersection.size().width() * intersection.size().width();
+    const double intersection_area = intersection.size().width() * intersection.size().height();
     const double overlap_ratio = intersection_area / inner_area;
     return overlap_ratio >= percent;
 }
