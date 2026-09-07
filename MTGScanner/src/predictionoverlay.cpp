@@ -4,28 +4,17 @@
 
 namespace MTGS {
 
-PredictionOverlay::PredictionOverlay(QQuickItem *parent) : QQuickItem(parent) {
+PredictionOverlay::PredictionOverlay(QQuickItem *parent)
+    : QQuickItem(parent)
+{
     setFlag(ItemHasContents, true); // Enables scene graph rendering
 }
 
-void PredictionOverlay::updatePredictions(QList<Prediction> &&predictions) {
+void PredictionOverlay::updatePredictions(QList<Prediction> &&predictions, QSize sourceSize) {
     m_predictions = std::move(predictions);
+    m_sourceSize = sourceSize;
     m_dirty = true;
     update();
-}
-
-QRectF PredictionOverlay::contentRect() const
-{
-    return m_contentRect;
-}
-
-void PredictionOverlay::setContentRect(const QRectF &rect)
-{
-    if (m_contentRect == rect)
-        return;
-
-    m_contentRect = rect;
-    emit contentRectChanged();
 }
 
 QSGNode *PredictionOverlay::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *) {
@@ -57,6 +46,9 @@ QSGNode *PredictionOverlay::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeDat
         return node;
     }
 
+    const float scale_x = static_cast<float>(width()) / static_cast<float>(m_sourceSize.width());
+    const float scale_y = static_cast<float>(height()) / static_cast<float>(m_sourceSize.height());
+
     constexpr int k_box_vertices = 8;
     constexpr int k_keypoint_vertices = 4;
     int vertex_count = 0;
@@ -74,10 +66,10 @@ QSGNode *PredictionOverlay::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeDat
     int index = 0;
     auto *vertices = geometry->vertexDataAsPoint2D();
     for (const auto &pred : m_predictions) {
-        const float x1 = static_cast<float>(pred.box.x());
-        const float y1 = static_cast<float>(pred.box.y());
-        const float x2 = static_cast<float>(pred.box.x() + pred.box.width());
-        const float y2 = static_cast<float>(pred.box.y() + pred.box.height());
+        const float x1 = static_cast<float>(pred.box.x()) * scale_x;
+        const float y1 = static_cast<float>(pred.box.y()) * scale_y;
+        const float x2 = static_cast<float>(pred.box.x() + pred.box.width()) * scale_x;
+        const float y2 = static_cast<float>(pred.box.y() + pred.box.height()) * scale_y;
 
         // Bounding Box Vertices
         vertices[index++].set(x1, y1); vertices[index++].set(x2, y1); // Top line
@@ -90,8 +82,8 @@ QSGNode *PredictionOverlay::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeDat
             if (index + k_keypoint_vertices > vertex_count)
                 break;
 
-            const float kx = static_cast<float>(kp.pt.x());
-            const float ky = static_cast<float>(kp.pt.y());
+            const float kx = static_cast<float>(kp.pt.x()) * scale_x;
+            const float ky = static_cast<float>(kp.pt.y()) * scale_y;
 
             // Horizontal Line
             vertices[index++].set(kx - k_crosshair_radius, ky);

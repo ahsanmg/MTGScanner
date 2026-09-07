@@ -18,22 +18,15 @@ namespace MTGS {
 class PredictionOverlay : public QQuickItem {
     Q_OBJECT
     QML_ELEMENT
-    Q_PROPERTY(QRectF contentRect READ contentRect WRITE setContentRect NOTIFY contentRectChanged FINAL)
 public:
     explicit PredictionOverlay(QQuickItem *parent = nullptr);
-    void updatePredictions(QList<Prediction> &&predictions);
-    QRectF contentRect() const;
-
-public slots:
-    void setContentRect(const QRectF &rect);
-
-signals:
-    void contentRectChanged();
+    void updatePredictions(QList<Prediction> &&predictions, QSize sourceSize);
 
 protected:
     QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *) override;
 
 private:
+    QSize m_sourceSize;
     QRectF m_contentRect;
     QList<Prediction> m_predictions;
     std::atomic_bool m_dirty = false;

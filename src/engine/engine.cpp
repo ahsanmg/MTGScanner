@@ -356,11 +356,11 @@ void Engine::receiveFrameNotification(const FramePtr& frame)
         }
     }
 
-    auto videoSink = channel->outVideoSink();
-    if (videoSink) {
-        videoSink->setVideoFrame(frame->frameOriginal);
+    auto video_sink = channel->outVideoSink();
+    if (video_sink) {
+        video_sink->setVideoFrame(frame->frameOriginal);
         if (m_predictionOverlay)
-            m_predictionOverlay->updatePredictions(std::move(frame->predictions));
+            m_predictionOverlay->updatePredictions(std::move(frame->predictions), frame->frameOriginal.size());
     }
 }
 
@@ -665,7 +665,7 @@ void Engine::unRegisterChannelOutSink(const QString &channelId)
     if (QVideoSink *sink = channel->outVideoSink()) {
         sink->setVideoFrame(QVideoFrame());
         if (m_predictionOverlay) // and an empty prediction list for the overlay
-            m_predictionOverlay->updatePredictions(QList<Prediction>());
+            m_predictionOverlay->updatePredictions(QList<Prediction>(), QSize());
     }
 
     channel->setOutVideoSink(nullptr);

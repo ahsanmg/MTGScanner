@@ -28,7 +28,8 @@ Pane {
 
             PredictionOverlay {
                 id: overlay
-                anchors.centerIn: parent
+                x: videoOutput.contentRect.x
+                y: videoOutput.contentRect.y
                 width: videoOutput.contentRect.width
                 height: videoOutput.contentRect.height
             }
