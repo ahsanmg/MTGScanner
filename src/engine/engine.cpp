@@ -5,7 +5,6 @@
 #include <tuple>
 
 #include <QtCore/qassert.h>
-#include <QtMultimedia/QVideoSink>
 #include <QUrl>
 #include <QFile>
 #include <QList>
@@ -23,7 +22,9 @@
 #include <QGuiApplication>
 #include <QCoreApplication>
 #include <QLoggingCategory>
+#include <QtMultimedia/QVideoSink>
 #include <QtMultimedia/QVideoFrame>
+#include <QtMultimedia/QMediaMetaData>
 
 #include <onnxruntime_cxx_api.h>
 #include <opencv2/core/mat.hpp>
@@ -344,7 +345,7 @@ void Engine::receiveFrameNotification(const FramePtr& frame)
         return;
     }
 
-    OutputWindow *window = m_outputWindows.value(frame->channelId, nullptr);
+    QSharedPointer<OutputWindow> window = m_outputWindows.value(frame->channelId, nullptr);
     if (window) {
         // Send crops to each channel's output window
         for(const auto &p : frame->predictions) {
@@ -493,7 +494,7 @@ void Engine::addChannel(AbstractChannel *channel, int status)
     
     capture->moveToThread(thread);
     channel_raw->capture = {thread, capture};
-    channel_raw->cardProcessor = QSharedPointer<CardProcessor>::create(30, 60);
+    channel_raw->cardProcessor = QSharedPointer<CardProcessor>::create(30, 30);
     channel_raw->options = channel->options();
     channel_raw->status.storeRelaxed(status);
     channel_raw->capture.thread->start();
@@ -508,7 +509,8 @@ void Engine::addChannel(AbstractChannel *channel, int status)
     }
 
     auto model = new NameplateModel(20);
-    OutputWindow *window = new OutputWindow(true,
+    QSharedPointer<OutputWindow> window = 
+        QSharedPointer<OutputWindow>::create(true,
                                             true,
                                             model,
                                             nullptr);
@@ -516,7 +518,7 @@ void Engine::addChannel(AbstractChannel *channel, int status)
     window->setGeometry(channel->options().windowGeometry);
     window->setScreen(channel->outputWindowScreen());
     window->setWindowIcon(indexedWindowIcon(":/MTGScanner/icons/app_titled.svg", m_outputWindows.size() + 1));
-    model->setParent(window);
+    model->setParent(window.get());
     m_outputWindows.emplace(channel->options().id, window);
     if (m_mainQmlWindow)
         window->open(m_mainQmlWindow);
@@ -547,13 +549,18 @@ void Engine::deleteChannel(const ChannelOptions &options)
 
     QSharedPointer<ChannelRaw> raw_channel = nullptr;
     accessor a;
-    if (!m_rawChannels.find(a, channel->options().id) || a.empty()) {
-        qCCritical(engine_logger) << "Couldn't find a raw channel with id" << channel->options().id;   
+    if (m_rawChannels.find(a, channel->options().id) && !a.empty()) {
         raw_channel = a->second;
+    } else {
+        qCCritical(engine_logger) << "Couldn't find a raw channel with id" << channel->options().id;
     }
     disconnectChannel(channel, raw_channel);
 
     // Delete
+    if (auto output_window = m_outputWindows.take(options.id)) {
+        if (auto *handle = output_window->windowHandle())
+            handle->setTransientParent(nullptr);
+    }
     m_channels.take(options.id)->deleteLater();
     m_channelIdIndexMap.removeOne(options.id);
     m_rawChannels.erase(a);
@@ -681,12 +688,17 @@ void Engine::initializeOutputWindows(QQuickWindow *mainWindow)
 
 void Engine::launchOutputWindow(const QString &channelId)
 {
-    m_outputWindows.value(channelId)->open(m_mainQmlWindow);
+    if (auto window = m_outputWindows.value(channelId))
+        window->open(m_mainQmlWindow);
 }
 void Engine::closeOutputWindow(const QString &channelId)
 {
-    OutputWindow *window = m_outputWindows.value(channelId);
-    window->windowHandle()->setTransientParent(nullptr);
+    QSharedPointer<OutputWindow> window = m_outputWindows.value(channelId);
+    if (!window)
+        return;
+
+    if (auto *handle = window->windowHandle())
+        handle->setTransientParent(nullptr);
     window->hide();
 }
 

@@ -93,7 +93,7 @@ private:
 
     tbb::concurrent_hash_map<QString, QSharedPointer<ChannelRaw>> m_rawChannels;
     QHash<QString, AbstractChannel*> m_channels;
-    QHash<QString, OutputWindow*> m_outputWindows;
+    QHash<QString, QSharedPointer<OutputWindow>> m_outputWindows;
     QList<QString> m_channelIdIndexMap;
 
     PredictionOverlay *m_predictionOverlay = nullptr;

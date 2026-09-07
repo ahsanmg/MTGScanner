@@ -43,9 +43,10 @@ void NameplateModel::addNameplate(size_t trackedCardId, QImage image)
     if (m_nameplates.size() >= m_maxNameplates * 2) {
         int first = m_maxNameplates - 1;
         int last = m_nameplates.size() - 1;
+        int remove_count = m_nameplates.size() - first;
         beginRemoveRows(QModelIndex(), first, last);
-        m_nameplates.remove(first, m_nameplates.size() - first);
-        m_trackedCardIds.remove(first, m_nameplates.size() - first);
+        m_nameplates.remove(first, remove_count);
+        m_trackedCardIds.remove(first, remove_count);
         endRemoveRows();
     }
 
