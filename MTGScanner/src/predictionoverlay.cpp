@@ -40,7 +40,9 @@ QSGNode *PredictionOverlay::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeDat
     m_dirty = false;
 
     // Handle empty frame
-    if (m_predictions.isEmpty()) {
+    if (m_predictions.isEmpty()
+        || m_sourceSize.width() <= 0
+        || m_sourceSize.height() <= 0) {
         node->geometry()->allocate(0);
         node->markDirty(QSGNode::DirtyGeometry);
         return node;
