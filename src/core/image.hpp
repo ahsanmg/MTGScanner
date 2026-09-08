@@ -88,6 +88,11 @@ inline void letterBox(const cv::Mat& image, cv::Mat& outImage,
                        const cv::Scalar& color = cv::Scalar(114, 114, 114),
                        const bool scale = true)
 {
+    if (image.empty() || newShape.width <= 0 || newShape.height <= 0) {
+        outImage.release();
+        return;
+    }
+
     float ratio = std::min(static_cast<float>(newShape.height) / image.rows,
                            static_cast<float>(newShape.width) / image.cols);
 

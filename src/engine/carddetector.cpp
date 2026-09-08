@@ -4,10 +4,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <numeric>
 #include <stdexcept>
 #include <filesystem>
-#include <functional>
 
 #include <QFile>
 #include <QImage>
@@ -106,6 +104,16 @@ QList<QList<Prediction>> CardDetector::predict(const QList<QImage> &batch, float
     const int config_batch = m_config.batch.value();
     predictions_list.reserve(batch.size());
 
+    if (!m_preprocessWorkspaces.hasLocalData()) {
+        auto workspace = QSharedPointer<PreprocessWorkspace>::create();
+        workspace->shape = m_session.GetInputTypeInfo(0).GetTensorTypeAndShapeInfo().GetShape();
+        m_preprocessWorkspaces.setLocalData(workspace);
+    }
+    const QSharedPointer<PreprocessWorkspace> workspace = m_preprocessWorkspaces.localData();
+    cv::Mat &letterboxed = workspace->letterboxed;
+    std::vector<float> &input_data = workspace->inputData;
+    std::vector<int64_t> &shape = workspace->shape;
+
     try {
         for(size_t b = 0; b < batch.size();) {
             const size_t sel_end = config_batch < 0                                   // batch is set to -1
@@ -113,27 +121,80 @@ QList<QList<Prediction>> CardDetector::predict(const QList<QImage> &batch, float
                                     : std::min<size_t>(batch.size(), b + config_batch);    // else, the specific size
             const size_t sel_size = sel_end - b;
 
-            auto [sel_batch, resized_size, shape] = preProcess(batch, b, sel_size);
-            std::vector<float> input_data(std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int>()));
-            permute(sel_batch, input_data);
+            int max_h = static_cast<int>(shape.at(2));
+            int max_w = static_cast<int>(shape.at(3));
+            if (hasDynamicShape()) {
+                const int model_stride = m_config.stride.value_or(32);
+                if (max_h == -1) {
+                    max_h = m_config.imgsz
+                        ? m_config.imgsz->at(0)
+                        : batch[b].height();
+                    if (max_h % model_stride != 0)
+                        max_h = ((max_h / model_stride) + 1) * model_stride;
+                }
+                if (max_w == -1) {
+                    max_w = m_config.imgsz
+                        ? m_config.imgsz->at(1)
+                        : batch[b].width();
+                    if (max_w % model_stride != 0)
+                        max_w = ((max_w / model_stride) + 1) * model_stride;
+                }
+            }
+
+            shape[0] = static_cast<int64_t>(sel_size);
+            shape[2] = max_h;
+            shape[3] = max_w;
+            const cv::Size resized_size(max_w, max_h);
+            const size_t plane_size = static_cast<size_t>(max_h) * max_w;
+            input_data.resize(sel_size * 3 * plane_size);
+
+            for (size_t sample = 0; sample < sel_size; ++sample) {
+                const QImage &rgb = batch[b + sample];
+                const cv::Mat source(rgb.height(), rgb.width(), CV_8UC3,
+                                     const_cast<uchar *>(rgb.bits()), rgb.bytesPerLine());
+
+                const float scale = std::min(
+                    static_cast<float>(max_h) / source.rows,
+                    static_cast<float>(max_w) / source.cols);
+                const cv::Size scaled_size(
+                    std::max(1, cvRound(source.cols * scale)),
+                    std::max(1, cvRound(source.rows * scale)));
+                const int pad_x = (max_w - scaled_size.width) / 2;
+                const int pad_y = (max_h - scaled_size.height) / 2;
+
+                letterboxed.create(max_h, max_w, CV_8UC3);
+                letterboxed.setTo(cv::Scalar(114, 114, 114));
+                cv::resize(source,
+                           letterboxed(cv::Rect(pad_x, pad_y, scaled_size.width, scaled_size.height)),
+                           scaled_size, 0.0, 0.0, cv::INTER_LINEAR);
+
+                const size_t sample_offset = sample * 3 * plane_size;
+                for (int row = 0; row < max_h; ++row) {
+                    const cv::Vec3b *pixels = letterboxed.ptr<cv::Vec3b>(row);
+                    for (int column = 0; column < max_w; ++column) {
+                        const size_t pixel_offset = static_cast<size_t>(row) * max_w + column;
+                        const cv::Vec3b &pixel = pixels[column];
+                        input_data[sample_offset + pixel_offset] = pixel[0] / 255.0f;
+                        input_data[sample_offset + plane_size + pixel_offset] = pixel[1] / 255.0f;
+                        input_data[sample_offset + 2 * plane_size + pixel_offset] = pixel[2] / 255.0f;
+                    }
+                }
+            }
 
             Ort::RunOptions run_options;
-            std::vector<Ort::Value> input_tensors;
-            input_tensors.push_back(
-                Ort::Value::CreateTensor(
-                    m_tensorMemoryInfo,
-                    input_data.data(),
-                    input_data.size(),
-                    shape.data(),
-                    shape.size()
-                )
+            Ort::Value input_tensor = Ort::Value::CreateTensor(
+                m_tensorMemoryInfo,
+                input_data.data(),
+                input_data.size(),
+                shape.data(),
+                shape.size()
             );
 
             auto output_tensors = m_session.Run(
                 run_options, 
                 m_inputNamesP.data(), 
-                input_tensors.data(), 
-                input_tensors.size(), 
+                &input_tensor,
+                1,
                 m_outputNamesP.data(), 
                 m_outputNamesP.size()
             );

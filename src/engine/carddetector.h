@@ -9,6 +9,7 @@
 #include <QMap>
 #include <QList>
 #include <QSharedPointer>
+#include <QThreadStorage>
 
 #include <onnxruntime_c_api.h>
 #include <onnxruntime_cxx_api.h>
@@ -49,6 +50,12 @@ private:
     QList<QList<Prediction>> postProcess(const QList<QImage> &batch, int batchIndx, int batchSize, cv::Size resizedSize, const std::vector<Ort::Value> &outputTensor, float threshold = 0.4f);
 
 private:
+    struct PreprocessWorkspace {
+        cv::Mat letterboxed;
+        std::vector<float> inputData;
+        std::vector<int64_t> shape;
+    };
+
     CardDetectorConfig m_config;
     QSharedPointer<Ort::Env> m_env;
     Ort::Session m_session{ nullptr };
@@ -60,6 +67,7 @@ private:
     std::vector<const char *> m_inputNamesP;
     std::vector<const char *> m_outputNamesP;
     QMap<std::string, std::string> m_modelMetadata;
+    QThreadStorage<QSharedPointer<PreprocessWorkspace>> m_preprocessWorkspaces;
 };
 
 } // namespace MTGSs
