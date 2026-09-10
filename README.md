@@ -84,7 +84,7 @@ The blue ones are `tbb::flow::unlimited` and the rest are `tbb::flow::serial`.
 To build this project, you need:
 
 #### Tools
-* **GCC 15 or MSVC 18**
+* **GCC 15 or MSVC 14**
 * **CMake 4.2.3**
 * **CMake Generator (i.e. Ninja)**
 * **VCPKG**
