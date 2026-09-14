@@ -71,24 +71,6 @@ Engine::Engine(QObject *parent)
     connect(this, &Engine::channelAdded, m_channelsModel, &ChannelModel::channelAdded);
     connect(this, &Engine::channelAboutToBeDeleted, m_channelsModel, &ChannelModel::channelDeleted);
 
-#ifndef NDEBUG
-    // Add a demo channel
-    QUrl demo_file = QUrl("assets/videos/demo.mp4");
-    if (demo_file.isValid() && QFile::exists(demo_file.path())) {
-        DemoChannel *channel = new DemoChannel(this);
-        channel->options().id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-        channel->options().name = "Demo";
-        channel->options().windowGeometry = QRect(50, 50, 400, 400);
-        channel->setPlayer(new QMediaPlayer(channel));
-        channel->player()->setSource(demo_file);
-        channel->player()->setVideoSink(new QVideoSink(channel->player()));
-        channel->setMetrics(new ChannelMetrics(channel));
-        channel->setOutputWindowScreen(QGuiApplication::primaryScreen());
-
-        addChannel(channel, Engine::Running);
-    }
-#endif
-
     // Load the saved channels
     loadFromSettings();
 
@@ -113,6 +95,26 @@ Engine::~Engine()
     }
 
     m_graph.wait_for_all();
+}
+
+void Engine::addDemoChannel(const QUrl &url)
+{
+    if (!url.isValid() || !QFile::exists(url.path())) {
+        qCWarning(engine_logger) << "Invalid url for a demo channel" << url;
+        return;
+    }
+
+    DemoChannel *channel = new DemoChannel(this);
+    channel->options().id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    channel->options().name = "Demo";
+    channel->options().windowGeometry = QRect(50, 50, 400, 400);
+    channel->setPlayer(new QMediaPlayer(channel));
+    channel->player()->setSource(url);
+    channel->player()->setVideoSink(new QVideoSink(channel->player()));
+    channel->setMetrics(new ChannelMetrics(channel));
+    channel->setOutputWindowScreen(QGuiApplication::primaryScreen());
+
+    addChannel(channel, Engine::Running);
 }
 
 void Engine::initializeGraph()
@@ -219,12 +221,12 @@ Channel *Engine::createChannel()
 
 AbstractChannel *Engine::channel(const QString &channelId)
 {
-    if (!m_channels.contains(channelId)) {
+    AbstractChannel *channel = m_channels.value(channelId, nullptr);
+    if (!channel) {
         qCCritical(engine_logger) << QString("Requsted channel for a non existent id %1.").arg(channelId);
         return nullptr;
     }
 
-    AbstractChannel *channel = m_channels.value(channelId);
     QQmlEngine::setObjectOwnership(channel, QQmlEngine::CppOwnership);
     return channel;
 }
@@ -232,7 +234,9 @@ AbstractChannel *Engine::channel(const QString &channelId)
 AbstractChannel *Engine::channelAtIndex(int index)
 {
     if (index < 0 || index >= m_channelIdIndexMap.size()) {
-        qCCritical(engine_logger) << QString("Requsted channel for a non existent index %1.").arg(index);
+        qCCritical(engine_logger) << QString("Requsted channel for a non existent index %1, total %2 channels.")
+            .arg(index)
+            .arg(m_channelIdIndexMap.size());
         return nullptr;
     }
 

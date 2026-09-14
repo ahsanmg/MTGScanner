@@ -19,6 +19,9 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName("MTGScanner");
 
     QScopedPointer<MTGS::Engine> mtgs_engine(new MTGS::Engine);
+#ifndef NDEBUG
+    mtgs_engine->addDemoChannel(QUrl("assets/videos/demo.mp4"));
+#endif
     qmlRegisterSingletonInstance("MTGScanner.Engine", 0, 1, "Engine", mtgs_engine.get());
 
     QQmlApplicationEngine engine;

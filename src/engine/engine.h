@@ -46,6 +46,7 @@ public:
 
     Engine(QObject *parent = nullptr);
     ~Engine();
+    void addDemoChannel(const QUrl &url);
     ChannelModel* channelsModel() const;
     AvailableCamerasModel* availableCamerasModel() const;
     Q_INVOKABLE Channel *createChannel();
