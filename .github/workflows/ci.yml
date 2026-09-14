@@ -1,7 +1,7 @@
 # CI: Build & test on Ubuntu and Windows using Qt + CMake
 # - installs Qt with jurplel/install-qt-action
 # - configures with CMake (Ninja)
-# - [TODO] builds and runs ctest
+# - builds and runs ctest
 # - [TODO] uploads the build directory as an artifact
 name: CI
 
@@ -109,6 +109,7 @@ jobs:
 
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTING=ON \
             -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR" \
             -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" \
             -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} \
@@ -128,6 +129,7 @@ jobs:
 
           cmake -S . -B build -G Ninja `
             -DCMAKE_BUILD_TYPE=Release `
+            -DBUILD_TESTING=ON `
             -DCMAKE_PREFIX_PATH="$env:QT_ROOT_DIR" `
             -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" `
             -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} `
@@ -137,10 +139,21 @@ jobs:
         run: |
           cmake --build build --config Release
 
-      # - name: Run tests (ctest)
-      #   run: |
-      #     cmake --build build --target test --config Release || true
-      #     ctest --test-dir build -C Release --output-on-failure
+      - name: Run tests (ctest - Linux)
+        if: matrix.host == 'linux'
+        shell: bash
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          ctest --test-dir build -C Release --output-on-failure
+
+      - name: Run tests (ctest - Windows)
+        if: matrix.host == 'windows'
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          ctest --test-dir build -C Release --output-on-failure
 
       # - name: Upload build artifact
       #   if: always()

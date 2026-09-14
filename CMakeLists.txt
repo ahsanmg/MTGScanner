@@ -33,6 +33,12 @@ add_subdirectory(MTGScanner)
 add_subdirectory(3rdParty/ByteTrack-cpp)
 add_subdirectory(src)
 
+include(CTest)
+if(BUILD_TESTING)
+    find_package(Qt6 ${QT_VERSION} REQUIRED COMPONENTS Test)
+    add_subdirectory(tests)
+endif()
+
 set_target_properties(${PROJECT_NAME}App PROPERTIES
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
