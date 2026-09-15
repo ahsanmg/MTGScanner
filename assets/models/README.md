@@ -1,3 +1,5 @@
+Place for all the models used  by this project.
+
 # YOLO11n Pose Model
 
 This model is a fine-tuned YOLO11n Pose model based on Ultralytics YOLO.

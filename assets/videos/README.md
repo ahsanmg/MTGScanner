@@ -1,0 +1,1 @@
+Put test videos here, the Demo Channel expects a `demo.mp4`, which is then copied to the destination.
