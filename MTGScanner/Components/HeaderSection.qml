@@ -19,9 +19,9 @@ Pane {
             Layout.alignment: Qt.AlignVCenter
             Layout.fillHeight: true
 
-            text: root.channelName + " - Channel"
+            text: root.channelName + " - Viewport"
             font.pixelSize: 18
-            font.weight: Font.Medium
+            font.weight: Font.Bold
             horizontalAlignment: Text.AlignLeft
             verticalAlignment: Text.AlignVCenter
         }
