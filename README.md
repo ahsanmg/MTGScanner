@@ -133,3 +133,11 @@ Replace the `<...>` with proper paths. If Qt is still missing, you can also use 
 
 > [!NOTE]  
 > Building in Debug mode (i.e. `-DCMAKE_BUILD_TYPE=Debug`) allows you to use a video file `<bin_dir>/assets/videos/demo.mp4` for debugging. The name must be `demo.mp4` and must be located at the exact path or you can put it in the source directory's `assets/videos` directory and CMake will copy it to the right place. If the file is missing or have a different path, the application will ignore it.
+
+## License
+
+This project is licensed under the GNU Affero General Public License
+version 3 (AGPL-3.0).
+
+This project uses the Ultralytics YOLO11 model, licensed under AGPL-3.0.
+See the Ultralytics license for details.
