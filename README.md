@@ -118,6 +118,7 @@ Open Terminal or `x64 Native Tools Command Prompt for VS`, `cd` directory somewh
 
 ```bash
 # Clone the project
+# Make sure you have git-lfs installed
 git clone --recursive https://github.com/ahsanullah-8bit/MTGScanner.git
 cd MTGScanner
 

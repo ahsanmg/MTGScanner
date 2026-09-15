@@ -85,7 +85,6 @@ CMakeLists.txt.user*
 compile_commands.json
 **/.qmlls.ini
 .mind_map.md
-*.onnx
 *.mp4
 *.mkv
 !app_icon.rc
