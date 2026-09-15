@@ -9,24 +9,29 @@ set(FETCHCONTENT_QUIET OFF)
 set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
 set(FETCHCONTENT_GIT_PROGRESS ON)
 
-if (WIN32)
-	set(ORT_URL "https://github.com/ahsanullah-8bit/fmr/releases/download/v0.0.0/ort_win64_1.22.2.zip")
-	set(ORT_URL_HASH "SHA256=0a9ef10c4c15b055fc206c9783f91a51c58cd13515fb7e2034c139dfa70e7d58")
-elseif(LINUX)
-	set(ORT_URL "https://github.com/ahsanullah-8bit/fmr/releases/download/v0.0.0/ort_linux_1.22.2_cpu.zip")
-	set(ORT_URL_HASH "SHA256=11db33f3b1aff9234f03ec4e85c86a16ce0bd50a6716d1248c27157e00ff5a4b")
+set(MTGS_ORT_URL "" CACHE STRING "URL of the ONNX Runtime archive")
+set(MTGS_ORT_URL_HASH "" CACHE STRING "SHA256 hash of the ONNX Runtime archive")
+
+if (MTGS_ORT_URL STREQUAL "" OR MTGS_ORT_URL_HASH STREQUAL "")
+	if (WIN32)
+		set(MTGS_ORT_URL "https://github.com/ahsanmg/_deps/releases/download/2026.08/onnxruntime-v1.22.2-x64-windows.tar.gz")
+		set(MTGS_ORT_URL_HASH "SHA256=b52da5b654f955fe00e44e86b3cf4e6821c42bc45447cf7ded238aeddb7f1a9b")
+	elseif(LINUX)
+		set(MTGS_ORT_URL "https://github.com/ahsanmg/_deps/releases/download/2026.08/onnxruntime-v1.22.2-x64-ubuntu.tar.gz")
+		set(MTGS_ORT_URL_HASH "SHA256=6718342f184d4c2856a8738554096c90ae7169626b7b93175ee5e00347b2f4b8")
+	endif()
 endif()
 
 if (onnxruntime_DIR AND NOT onnxruntime_DIR STREQUAL "")
 	set(onnxruntime_ROOT "${onnxruntime_DIR}/../../../" CACHE STRING "Path to onnxruntime root directory")
 elseif (onnxruntime_ROOT AND NOT onnxruntime_ROOT STREQUAL "")
 	set(onnxruntime_DIR "${onnxruntime_ROOT}/lib/cmake/onnxruntime" CACHE STRING "Path to onnxruntime config files")
-elseif (ORT_URL AND ORT_URL_HASH)
-	    message(NOTICE "--- Setting up onnxruntime ---")
+elseif (MTGS_ORT_URL AND MTGS_ORT_URL_HASH)
+	    message(STATUS "Setting up onnxruntime from ${MTGS_ORT_URL}")
 
 		FetchContent_Declare(onnxruntime
-			URL ${ORT_URL}
-			URL_HASH ${ORT_URL_HASH}
+			URL ${MTGS_ORT_URL}
+			URL_HASH ${MTGS_ORT_URL_HASH}
 		)
 	    FetchContent_MakeAvailable(onnxruntime)
 		FetchContent_GetProperties(onnxruntime)
@@ -36,7 +41,7 @@ elseif (ORT_URL AND ORT_URL_HASH)
 			set(onnxruntime_ROOT ${onnxruntime_SOURCE_DIR} CACHE STRING "Path to onnxruntime root directory")
 		endif()
 
-		message(NOTICE "--- Setup onnxruntime completed ---")
+		message(STATUS "Setup onnxruntime completed")
 else()
 	message(WARNING "Please set a valid path to onnxruntime_DIR.")
 endif()

@@ -90,7 +90,7 @@ To build this project, you need:
 * **VCPKG**
 
 #### Dependencies
-* **Qt 6.11.1**
+* **Qt 6.9+**
 * **ONNXRuntime v1.22**
 * **OpenCV 4.10.0**
 * **TBB 2022.3.0**
@@ -99,16 +99,20 @@ To build this project, you need:
 * **Eigen3** (for ByteTrack-cpp)
 
 > [!NOTE]
-> 1. The versions specified here are my current installations and I don't know if it should work with earlier versions. *Qt 6.10* had a major GC bug, so I'd watch out for that.
+> 1. The versions specified here are my current installations and I don't know if it should work with earlier versions. Except Qt, *Qt 6.10* had a major GC bug, so I'd watch out for that.
 > 2. You can build without VCPKG, if you've custom builds for the [packages](vcpkg.json). You've to set `<package>_DIR` for each package in that case, during configuration.
-> 3. Qt and ONNXRuntime aren't part of VCPKG packages because of their size and time-consuming builds. You're free to install them however you want, through VCPKG, package managers, Qt Online Installer, custom binaries, etc. However, a default ONNXRuntime build (from release assets) will be downloaded/used, if you don't provide/set `onnxruntime_ROOT` or `onnxruntime_DIR`.
+> 3. Qt and ONNXRuntime aren't part of VCPKG packages because of their size and time-consuming builds. You're free to install them however you want, through VCPKG, package managers, Qt Online Installer, custom binaries, etc. However, a default ONNXRuntime build with `CPUExecutionProvider` will be downloaded from my [_deps](https://github.com/ahsanmg/_deps) repository releases, if you don't set either:
+    * `onnxruntime_ROOT` or `onnxruntime_DIR`, which uses a local installation.
+    * `MTGS_ORT_URL` and `MTGS_ORT_URL_HASH`, which will download an archive.
 > 4. You can have your own ONNXRuntime build with any Execution Provider or simply paste binaries provided by the maintainers (e.g. [OpenVINO EP](https://onnxruntime.ai/docs/execution-providers/OpenVINO-ExecutionProvider.html#install)) alongside ONNXRuntime binaries. But MTGScanner only recognizes CPU and OpenVINO EPs at the moment. I don't have a dedicated GPU. But it is **highly** recommended to have OpenVINO or any other EP, because CPU only will overload the system and starve the application, resulting in unwanted behavior.
 > 5. ByteTrack-cpp is a submodule and requires Eigen3 to work. So, make sure you use the `--recursive` option when cloning.
 
 #### The Model
-This project uses a custom trained **YOLO11n-pose** model. It'll be provided in each release and must be copied relative to the binary directory `<bin_dir>/assets/models/yolo11n-pose.onnx` or you can also put it in the source directory's `assets/models` directory and CMake will take care of the copy.
+This project uses a custom trained **YOLO11n-pose** model. It is provided as a `git-lfs` object. It must be copied relative to the binary directory `<bin_dir>/assets/models/yolo11n-pose.onnx` or you can also:
+    * install `git-lfs` before clone or do `git lfs pull` after the clone.
+    * put it in the source directory's `assets/models` directory and CMake will take care of the copy.
 
-The Pose Estimation dataset (of 285 images) contains images from the internet, taken by collectors using their phones and some from a youtube video. I'm expanding the dataset continously and will soon be available on patreon or something.
+The Pose Estimation private dataset (of 285 images) contains images from the Reddit, Google Images and Facebook, taken by collectors using their phones and some from youtube videos. I don't claim any license to the images.
 
 > [!WARNING]
 > As of now, the application expects this model with the exact number of classes (i.e. `card_front`, `title` and `card_back`) and output layout, for performance reasons. The behavior is unknown, in case of any other model.
@@ -121,6 +125,10 @@ Open Terminal or `x64 Native Tools Command Prompt for VS`, `cd` directory somewh
 # Make sure you have git-lfs installed
 git clone --recursive https://github.com/ahsanullah-8bit/MTGScanner.git
 cd MTGScanner
+
+# (optional) pull the model
+# This step isn't needed if you've git-lfs set up before the clone
+git lfs pull
 
 # Configure
 cmake -S . -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=<vcpkg_root>/scripts/buildsystems/vcpkg.cmake -DVCPKG_MANIFEST_MODE=ON -DVCPKG_BOOTSTRAP_OPTIONS=--shallow -DVCPKG_TARGET_TRIPLET=x64-linux-release -DVCPKG_OVERLAY_TRIPLETS=triplets -DQT_QMAKE_EXECUTABLE=<qt_root>/<version>/<kit>/bin/qmake.exe
